@@ -5,46 +5,43 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class HashTableTest {
+    HashTable hashTable = new HashTable();
+
     @Test
-    public void put() throws Exception {
-        HashTable hashTable = new HashTable();
-        assertEquals(null, hashTable.put("key1", "value1"));
+    public void putTest() throws Exception {
+        assertNull(hashTable.put("key1", "value1"));
         assertEquals("value1", hashTable.put("key1", "value2"));
     }
 
     @Test
-    public void get() throws Exception {
-        HashTable hashTable = new HashTable();
-        assertEquals(null, hashTable.get("key1"));
-        assertEquals(null, hashTable.put("key1", "value1"));
+    public void getTest() throws Exception {
+        assertNull(hashTable.get("key1"));
+        assertNull(hashTable.put("key1", "value1"));
         assertEquals("value1", hashTable.get("key1"));
         assertEquals("value1", hashTable.put("key1", "value2"));
         assertEquals("value2", hashTable.get("key1"));
     }
 
     @Test
-    public void remove() throws Exception {
-        HashTable hashTable = new HashTable();
-        assertEquals(null, hashTable.put("key1", "value1"));
+    public void removeTest() throws Exception {
+        assertNull(hashTable.put("key1", "value1"));
         assertEquals("value1", hashTable.remove("key1"));
-        assertEquals(null, hashTable.remove("key1"));
+        assertNull(hashTable.remove("key1"));
     }
 
     @Test
-    public void clear() throws Exception {
-        HashTable hashTable = new HashTable();
-        assertEquals(null, hashTable.put("key1", "value1"));
+    public void clearTest() throws Exception {
+        assertNull(hashTable.put("key1", "value1"));
         hashTable.clear();
-        assertEquals(null, hashTable.get("key1"));
+        assertNull(hashTable.get("key1"));
     }
 
     @Test
-    public void size() throws Exception {
-        HashTable hashTable = new HashTable();
+    public void sizeTest() throws Exception {
         assertEquals(0, hashTable.size());
-        assertEquals(null, hashTable.put("key1", "value1"));
+        assertNull(hashTable.put("key1", "value1"));
         assertEquals(1, hashTable.size());
-        assertEquals(null, hashTable.put("key2", "value2"));
+        assertNull(hashTable.put("key2", "value2"));
         assertEquals(2, hashTable.size());
         assertEquals("value1", hashTable.put("key1", "value2"));
         assertEquals(2, hashTable.size());
@@ -55,10 +52,9 @@ public class HashTableTest {
     }
 
     @Test
-    public void contains() throws Exception {
-        HashTable hashTable = new HashTable();
+    public void containsTest() throws Exception {
         assertEquals(false, hashTable.contains("key1"));
-        assertEquals(null, hashTable.put("key1", "value1"));
+        assertNull(hashTable.put("key1", "value1"));
         assertEquals(true, hashTable.contains("key1"));
     }
 

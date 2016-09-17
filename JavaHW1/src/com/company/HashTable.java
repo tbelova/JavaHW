@@ -7,9 +7,8 @@ package com.company;
 public class HashTable {
     private static final int cntOfLists = 239;
 
-    private int sz = 0;
+    private int size = 0;
     private List[] arrayOfLists = new List[cntOfLists];
-
 
     public HashTable() {
         for (int i = 0; i < cntOfLists; i++) {
@@ -17,7 +16,7 @@ public class HashTable {
         }
     }
 
-    private int Hash(String str) {
+    private int hash(String str) {
         int hash = 0;
         int p = 31;
         for (int i = 0; i < str.length(); i++) {
@@ -31,19 +30,19 @@ public class HashTable {
 
     /** метод size() возвращает количество ключей в хеш-таблице.*/
     public int size() {
-        return sz;
+        return size;
     }
 
 
     /** метод contains() возвращает true, если данный ключ содержится в хеш-таблице, и false иначе.*/
     public boolean contains(String key) {
-        return !(arrayOfLists[Hash(key)].empty());
+        return !(arrayOfLists[hash(key)].empty());
     }
 
 
     /** метод get() возвращает значение по ключу, или null, если такого значения нет.*/
     public String get(String key) {
-        return arrayOfLists[Hash(key)].get(key);
+        return arrayOfLists[hash(key)].get(key);
     }
 
 
@@ -52,9 +51,9 @@ public class HashTable {
      * что было по этому ключу раньше, либо null, ели ничего не было
      */
     public String put(String key, String value) {
-        String prevValue = arrayOfLists[Hash(key)].insert(key, value);
+        String prevValue = arrayOfLists[hash(key)].insert(key, value);
         if (prevValue == null) {
-            sz++;
+            size++;
         }
         return prevValue;
     }
@@ -65,9 +64,9 @@ public class HashTable {
      * либо null, если такого значения не было
      */
     public String remove(String key) {
-        String prevValue = arrayOfLists[Hash(key)].erase(key);
+        String prevValue = arrayOfLists[hash(key)].erase(key);
         if (prevValue != null) {
-            sz--;
+            size--;
         }
         return prevValue;
     }
@@ -75,7 +74,7 @@ public class HashTable {
 
     /** метод clear() очищает хеш-таблицу.*/
     public void clear() {
-        sz = 0;
+        size = 0;
         for (List ml: arrayOfLists) {
             ml.clear();
         }
