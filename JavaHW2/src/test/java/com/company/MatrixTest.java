@@ -65,11 +65,6 @@ public class MatrixTest {
             spiral.add(i);
         }
 
-        ArrayList<Integer> ss = matrix.spiralPrint();
-        for (int x: ss) {
-            System.out.print(x + " ");
-        }
-
         assertEquals(spiral, matrix.spiralPrint());
 
     }
@@ -81,7 +76,7 @@ public class MatrixTest {
                        {9, 2, 3} };
 
         Matrix matrix1 = new Matrix(m1);
-        matrix1.sortColomnsByFirstElement();
+        matrix1.sortColumnsByFirstElement();
 
         int[][] m2 = { {5, 6, 7},
                        {4, 1, 8},
