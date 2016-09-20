@@ -9,13 +9,13 @@ import static org.junit.Assert.*;
 public class MatrixTest {
 
     @Test
-    public void size() throws Exception {
+    public void sizeTest() throws Exception {
         Matrix matrix = new Matrix(5);
         assertEquals(5, matrix.size());
     }
 
     @Test
-    public void setAt() throws Exception {
+    public void setAtTest() throws Exception {
         Matrix matrix = new Matrix(5);
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 5; j++) {
@@ -25,7 +25,7 @@ public class MatrixTest {
     }
 
     @Test
-    public void get() throws Exception {
+    public void getTest() throws Exception {
         Matrix matrix = new Matrix(5);
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 5; j++) {
@@ -41,7 +41,7 @@ public class MatrixTest {
     }
 
     @Test
-    public void constructor() throws Exception {
+    public void constructorTest() throws Exception {
         int[][] m = { {1, 2, 3},
                       {4, 5, 6},
                       {7, 8, 9} };
@@ -53,7 +53,7 @@ public class MatrixTest {
     }
 
     @Test
-    public void spiralPrint() throws Exception {
+    public void spiralPrintTest() throws Exception {
         int[][] m = { {7, 6, 5},
                       {8, 1, 4},
                       {9, 2, 3} };
@@ -70,7 +70,7 @@ public class MatrixTest {
     }
 
     @Test
-    public void sortColomnsByFirstElement() throws Exception {
+    public void sortColomnsByFirstElementTest() throws Exception {
         int[][] m1 = { {7, 6, 5},
                        {8, 1, 4},
                        {9, 2, 3} };

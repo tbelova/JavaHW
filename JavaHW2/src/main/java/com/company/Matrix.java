@@ -9,7 +9,7 @@ import java.util.Collections;
  * и выводить элементы матрицы в порядке обхода по спирали с началом в центре.
  */
 public class Matrix {
-    private int n;
+    private final int n;
     private int[][] matrix;
 
     /**
@@ -128,7 +128,6 @@ public class Matrix {
         }
 
         return vector;
-
     }
 
     /** сортирует столбцы матрицы по первому элементу. */
