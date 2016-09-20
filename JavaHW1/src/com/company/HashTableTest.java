@@ -1,11 +1,17 @@
 package com.company;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 public class HashTableTest {
-    HashTable hashTable = new HashTable();
+    private HashTable hashTable;
+
+    @Before
+    public void constructorTest() throws Exception {
+        hashTable = new HashTable();
+    }
 
     @Test
     public void putTest() throws Exception {

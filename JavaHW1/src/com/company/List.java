@@ -10,7 +10,7 @@ public class List {
      * Node --  класс, представляющий из себя элемент списка,
      * содержащий пару (key, value) и ссылку на следующий элемент
      */
-    private class Node {
+    private static class Node {
 
         private Node next = null;
         private String key;

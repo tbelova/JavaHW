@@ -3,7 +3,6 @@ package com.company;
 /**
  * HashTable -- класс, представляющий из себя хеш-таблицу с ключами и значениями типа String
  */
-
 public class HashTable {
     private static final int cntOfLists = 239;
 
@@ -27,7 +26,6 @@ public class HashTable {
         return hash;
     }
 
-
     /** метод size() возвращает количество ключей в хеш-таблице.*/
     public int size() {
         return size;
@@ -48,7 +46,7 @@ public class HashTable {
 
     /**
      * метод put(key, value) кладет в хеш-таблицу значение value по ключу key и возвращает то,
-     * что было по этому ключу раньше, либо null, ели ничего не было
+     * что было по этому ключу раньше, либо null, если ничего не было
      */
     public String put(String key, String value) {
         String prevValue = arrayOfLists[hash(key)].insert(key, value);
