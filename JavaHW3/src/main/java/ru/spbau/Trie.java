@@ -33,16 +33,16 @@ public class Trie {
     public boolean add(String s) {
         Node last = root;
         for (int i = 0; i < s.length(); i++) {
-            if (last.next[s.charAt(i)] != null) {
-                last = last.next[s.charAt(i)];
-            } else {
-                last = new Node();
+            if (last.next[s.charAt(i)] == null) {
+                last.next[s.charAt(i)] = new Node();
+                last.next[s.charAt(i)].parent = last;
             }
+            last = last.next[s.charAt(i)];
         }
         last.addTerminate(1);
         recalc(last);
 
-        return last.getTerminate() > 1;
+        return last.getTerminate() == 1;
     }
 
     public boolean contains(String s) {
@@ -60,7 +60,7 @@ public class Trie {
     }
 
     public int size() {
-        return root.getTerminate();
+        return root.getAmoutOfTerminate();
     }
 
     public int howManyStartsWithPrefix(String prefix) {
