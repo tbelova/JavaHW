@@ -1,34 +1,10 @@
 package ru.spbau;
 
-public class Trie {
-    private class Node {
-        private Node[] next = new Node[256];
-        private Node parent = null;
-        private int isTerminate = 0;
-        private int amoutOfTerminate = 0;
+import java.io.*;
 
-        public void addTerminate(int isTerminate) {
-            this.isTerminate += isTerminate;
-        }
+public class Trie implements StreamSerializable {
 
-        public int getTerminate() {
-            return isTerminate;
-        }
-
-        public int getAmoutOfTerminate() {
-            return amoutOfTerminate;
-        }
-
-        private void recalc() {
-            amoutOfTerminate = isTerminate;
-            for (int i = 0; i < next.length; i++) {
-                if (next[i] == null) continue;
-                amoutOfTerminate += next[i].amoutOfTerminate;
-            }
-        }
-    }
-
-    Node root = new Node();
+    private Node root = new Node();
 
     public boolean add(String s) {
         Node last = root;
@@ -60,13 +36,22 @@ public class Trie {
     }
 
     public int size() {
-        return root.getAmoutOfTerminate();
+        return root.getAmountOfTerminate();
     }
 
     public int howManyStartsWithPrefix(String prefix) {
         Node node = find(prefix);
         if (node == null) return 0;
-        return node.getAmoutOfTerminate();
+        return node.getAmountOfTerminate();
+    }
+
+    public void serialize(OutputStream out) throws IOException {
+        (new ObjectOutputStream(out)).writeObject(root);
+    }
+
+    public void deserialize(InputStream in) throws IOException, ClassNotFoundException {
+        root = (Node)(new ObjectInputStream(in)).readObject();
+        root.fixParents(null);
     }
 
     private void recalc(Node node) {
@@ -86,6 +71,54 @@ public class Trie {
             }
         }
         return node;
+    }
+
+    private static class Node implements Serializable {
+        private Node[] next = new Node[256];
+        private Node parent = null;
+        private int isTerminate = 0;
+        private int amountOfTerminate = 0;
+
+        public void addTerminate(int isTerminate) {
+            this.isTerminate += isTerminate;
+        }
+
+        public int getTerminate() {
+            return   isTerminate;
+        }
+
+        public int getAmountOfTerminate() {
+            return amountOfTerminate;
+        }
+
+        private void recalc() {
+            amountOfTerminate = isTerminate;
+            for (Node node: next) {
+                if (node == null) continue;
+                amountOfTerminate += node.amountOfTerminate;
+            }
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.writeInt(isTerminate);
+            out.writeInt(amountOfTerminate);
+            out.writeObject(next);
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            isTerminate = in.readInt();
+            amountOfTerminate = in.readInt();
+            next = (Node[])in.readObject();
+        }
+
+        private void fixParents(Node parent) {
+            this.parent  = parent;
+            for (Node node: next) {
+                if (node == null) continue;
+                node.fixParents(this);
+            }
+        }
+
     }
 
 }

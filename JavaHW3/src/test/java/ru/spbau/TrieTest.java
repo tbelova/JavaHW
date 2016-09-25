@@ -3,6 +3,9 @@ package ru.spbau;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+
 import static org.junit.Assert.*;
 
 public class TrieTest {
@@ -67,6 +70,23 @@ public class TrieTest {
         assertEquals(3, trie.howManyStartsWithPrefix("abcde"));
         assertEquals(1, trie.howManyStartsWithPrefix("abcdef"));
         assertEquals(0, trie.howManyStartsWithPrefix("b"));
+    }
+
+    @Test
+    public void serializeTest() throws Exception {
+        addTest();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        trie.serialize(out);
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        Trie trie2 = new Trie();
+        trie2.deserialize(in);
+
+        assertEquals(trie.size(), trie2.size());
+        assertEquals(trie.contains("ababababa"), trie2.contains("ababababa"));
+        assertEquals(trie.contains("abcde"), trie2.contains("abcde"));
+        assertEquals(trie.contains("abcdef"), trie2.contains("abcdef"));
+        assertEquals(trie.contains("a"), trie2.contains("a"));
+        assertEquals(trie.contains("abgde"), trie2.contains("abgde"));
     }
 
 }
