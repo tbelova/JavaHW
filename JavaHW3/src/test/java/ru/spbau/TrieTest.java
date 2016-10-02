@@ -12,7 +12,7 @@ public class TrieTest {
     private Trie trie;
 
     @Before
-    public void constructorTest() throws Exception {
+    public void init() throws Exception {
         trie = new Trie();
     }
 
@@ -39,7 +39,11 @@ public class TrieTest {
     @Test
     public void removeTest() throws Exception {
         for (int i = 0; i < 10; ++i) {
-            addTest();
+            assertTrue(trie.add("abcde"));
+            assertTrue(trie.add("abcd"));
+            assertTrue(trie.add("abcdef"));
+            assertFalse(trie.add("abcde"));
+            assertTrue(trie.add("abgde"));
             assertTrue(trie.remove("abcde"));
             assertTrue(trie.remove("abcd"));
             assertTrue(trie.remove("abcdef"));
@@ -53,15 +57,27 @@ public class TrieTest {
     @Test
     public void sizeTest() throws Exception {
         assertEquals(0, trie.size());
-        removeTest();
+        assertFalse(trie.remove("abcde"));
         assertEquals(0, trie.size());
-        addTest();
+        assertTrue(trie.add("abcde"));
+        assertEquals(1, trie.size());
+        assertTrue(trie.add("abcd"));
+        assertEquals(2, trie.size());
+        assertTrue(trie.add("abcdef"));
+        assertEquals(3, trie.size());
+        assertFalse(trie.add("abcde"));
+        assertEquals(4, trie.size());
+        assertTrue(trie.add("abgde"));
         assertEquals(5, trie.size());
     }
 
     @Test
     public void howManyStartsWithPrefixTest() throws Exception {
-        addTest();
+        assertTrue(trie.add("abcde"));
+        assertTrue(trie.add("abcd"));
+        assertTrue(trie.add("abcdef"));
+        assertFalse(trie.add("abcde"));
+        assertTrue(trie.add("abgde"));
         assertEquals(5, trie.howManyStartsWithPrefix(""));
         assertEquals(5, trie.howManyStartsWithPrefix("a"));
         assertEquals(5, trie.howManyStartsWithPrefix("ab"));
@@ -74,7 +90,11 @@ public class TrieTest {
 
     @Test
     public void serializeTest() throws Exception {
-        addTest();
+        assertTrue(trie.add("abcde"));
+        assertTrue(trie.add("abcd"));
+        assertTrue(trie.add("abcdef"));
+        assertFalse(trie.add("abcde"));
+        assertTrue(trie.add("abgde"));
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         trie.serialize(out);
         ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
