@@ -30,7 +30,8 @@ public class Numbers {
      */
     public static void toSqrt(InputStream in, OutputStream out) {
         Function<Integer, Integer> sqrt = a -> a * a;
-        try (Scanner scanner = new Scanner(new BufferedInputStream(in)); PrintWriter writer = new PrintWriter(out)) {
+        try (Scanner scanner = new Scanner(new BufferedInputStream(in));
+             PrintWriter writer = new PrintWriter(out)) {
             while (scanner.hasNext()) {
                 if (!scanner.hasNextInt()) {
                     writer.println("null");

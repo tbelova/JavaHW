@@ -38,9 +38,9 @@ public class Maybe<T> {
      */
     public <U> Maybe<U> map(Function<? super T, ? extends U> mapper) {
         if (value == null) {
-            return new Maybe<U>();
+            return new Maybe<>();
         }
-        return new Maybe<U>(mapper.apply(value));
+        return new Maybe<>(mapper.apply(value));
     }
 
     private Maybe() {}

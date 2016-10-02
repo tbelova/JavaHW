@@ -8,8 +8,8 @@ import java.util.function.Function;
 import static org.junit.Assert.*;
 
 public class MaybeTest {
-    Maybe<Integer> maybe10;
-    Maybe<Integer> nothing;
+    private Maybe<Integer> maybe10;
+    private Maybe<Integer> nothing;
 
     @Before
     public void justTest() throws Exception {
