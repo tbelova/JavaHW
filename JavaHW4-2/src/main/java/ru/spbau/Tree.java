@@ -3,17 +3,17 @@ package ru.spbau;
 /** Tree -- generic-множество, хранящее элементы в дереве поиска. */
 public class Tree<T extends Comparable<T> > {
 
-    private Node root = null;
+    private Node<T> root = null;
     private int size = 0;
 
     /** Метод add добавляет новый элемент в множество. */
     public void add(T element) {
         if (root == null) {
-            root = new Node(element);
+            root = new Node<T>(element);
             size = 1;
             return;
         }
-        Node node = find(root, element);
+        Node<T> node = find(root, element);
         if (element.compareTo(node.getValue()) == 0) {
             return;
         }
@@ -30,12 +30,8 @@ public class Tree<T extends Comparable<T> > {
         if (root == null) {
             return false;
         }
-        Node node = find(root, element);
-        if (element.compareTo(node.getValue()) == 0) {
-            return true;
-        } else {
-            return false;
-        }
+        Node<T> node = find(root, element);
+        return element.compareTo(node.getValue()) == 0;
     }
 
     /** Метод size возвращает количество элементов в множестве. */
@@ -43,23 +39,21 @@ public class Tree<T extends Comparable<T> > {
         return size;
     }
 
-    private Node find(Node node, T element) {
+    private Node find(Node<T> node, T element) {
         if (element.compareTo(node.getValue()) == 0) {
             return node;
         }
         if (element.compareTo(node.getValue()) < 0) {
-            if (node.left == null) return node;
-            return find(node.left, element);
+            return (node.left == null) ? node : find(node.left, element);
         } else {
-            if (node.right == null) return node;
-            return find(node.right, element);
+            return (node.right == null) ? node : find(node.right, element);
         }
     }
 
-    private class Node {
+    private static class Node<T extends Comparable<T> > {
         private Node left = null;
         private Node right = null;
-        private T value;
+        private final T value;
 
         private Node(T element) {
             value = element;

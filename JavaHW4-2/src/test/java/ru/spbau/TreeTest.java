@@ -6,8 +6,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class TreeTest {
-    Tree<Integer> treeInt;
-    Tree<String> treeString;
+    private Tree<Integer> treeInt;
+    private Tree<String> treeString;
 
     @Before
     public void constructorTest1() throws Exception {
@@ -34,7 +34,6 @@ public class TreeTest {
         treeString.add("fdfjklj");
         treeString.add("dkfjm");
     }
-
 
     @Test
     public void containsTest1() throws Exception {
