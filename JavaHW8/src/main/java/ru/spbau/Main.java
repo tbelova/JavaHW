@@ -36,7 +36,7 @@ public class Main {
                 .filter(path1 -> path1.toFile().getName().endsWith(".zip"))
                 .forEach(path1 -> {
                     try {
-                        unZipPatternMatchingFiles (path1.toFile(), pattern);
+                        unZipPatternMatchingFiles(path1.toFile(), pattern);
                     } catch (IOException e) {
                         System.out.println(e.getMessage());
                     }
@@ -46,13 +46,19 @@ public class Main {
     private static void unZipPatternMatchingFiles(File file, Pattern pattern) throws IOException {
         ZipFile zipFile;
         zipFile = new ZipFile(file);
+
+        String folder_name = file.getName().substring(0, file.getName().length() - 4);
+
+        Path path = Paths.get("").resolve(file.getParent().toString() + "_result").resolve(folder_name);
+        Files.createDirectories(path);
+
         Enumeration<? extends ZipEntry> entries = zipFile.entries();
         while (entries.hasMoreElements()) {
             ZipEntry entry = entries.nextElement();
             if (entry.isDirectory()) {
-                Files.createDirectories(file.toPath().resolve(entry.getName()));
+                Files.createDirectories(path.resolve(entry.getName()));
             } else if (pattern.matcher(entry.getName()).matches()) {
-                Files.copy(zipFile.getInputStream(entry), file.toPath().resolve(entry.getName()));
+                Files.copy(zipFile.getInputStream(entry), path.resolve(entry.getName()));
             }
         }
     }
