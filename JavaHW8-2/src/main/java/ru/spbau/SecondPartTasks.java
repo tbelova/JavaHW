@@ -33,7 +33,7 @@ public final class SecondPartTasks {
         int CNT = 1_000_000;
         return Stream.generate(() -> Math.pow(generator.nextDouble() - 0.5, 2)
                                    + Math.pow(generator.nextDouble() - 0.5, 2))
-                     .limit(CNT).filter(dist -> dist <= 0.5).count() / CNT;
+                     .limit(CNT).filter(dist -> dist <= 0.25).count() / (double)CNT;
     }
 
     // Дано отображение из имени автора в список с содержанием его произведений.
@@ -42,10 +42,9 @@ public final class SecondPartTasks {
         return compositions.entrySet().stream()
                     .max(Comparator.comparing(entry -> entry.getValue()
                                                             .stream()
-                                                            .mapToInt(book -> book.length())
-                                                            .sum()))
-                    .get()
-                    .getKey();
+                                                            .collect(Collectors.summingInt(String::length))))
+                    .map(Map.Entry::getKey)
+                    .orElse("");
     }
 
     // Вы крупный поставщик продуктов. Каждая торговая сеть делает вам заказ в виде Map<Товар, Количество>.
