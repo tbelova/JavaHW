@@ -10,7 +10,15 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+/**
+ * Принимает путь и регулярное выражение.
+ * По указанному пути находит все zip-архивы и извлекает все файлы, имена которых удовлетворяют регулярному выражению.
+ */
 public class Main {
+    /**
+     * Ожидает на вход два аргумента: путь и регулярное выражение.
+     * В папку, соответствующую этому пути, с суффиксом _result разархивирует все архивы в папке.
+     * */
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
             System.out.println("Invalid number of arguments.");
