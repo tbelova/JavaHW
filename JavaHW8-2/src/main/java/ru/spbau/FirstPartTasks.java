@@ -57,11 +57,10 @@ public final class FirstPartTasks {
     // Альбом, в котором максимум рейтинга минимален
     // (если в альбоме нет ни одного трека, считать, что максимум рейтинга в нем --- 0)
     public static Optional<Album> minMaxRating(Stream<Album> albums) {
-        return albums.sorted(Comparator.comparing(album -> album.getTracks().stream()
+        return albums.min(Comparator.comparing(album -> album.getTracks().stream()
                                                                             .mapToInt(Track::getRating)
                                                                             .max()
-                                                                            .orElse(0)))
-                     .findFirst();
+                                                                            .orElse(0)));
     }
 
     // Список альбомов, отсортированный по убыванию среднего рейтинга его треков (0, если треков нет)
