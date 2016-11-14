@@ -41,15 +41,25 @@ public class Collections {
         return arrayList;
     }
 
+    /** Принимает p и a, возвращает список с началом a до первого элемента ai, для которого p(ai) == true.*/
+    public static <T> Iterable<T> takeUnless(Predicate<T> p, Iterable<? extends T> a) {
+        return takeWhile(new Predicate<T>() {
+            @Override
+            public Boolean apply(T x) {
+                return !p.apply(x);
+            }
+        }, a);
+    }
+
     /**
      * Принимает функцию двух аргументов, начальное значение и коллекцию.
      * Возвращает результат лево ассоциативной свертки.
      * @param f -- функция свертки.
      * @param first -- начальное значение.
-     * @param a -- коллекция.
+     * @param collection -- коллекция.
      */
-    public static <X, Y> X foldl(Function2<X, Y, X> f, X first, Iterable<? extends Y> a) {
-        for (Y element : a) {
+    public static <X, Y> X foldl(Function2<? super X, Y, ? extends X> f, X first, Iterable<? extends Y> collection) {
+        for (Y element : collection) {
             first = f.apply(first, element);
         }
         return first;
@@ -60,11 +70,11 @@ public class Collections {
      * Возвращает результат право ассоциативной свертки.
      * @param f -- функция свертки.
      * @param first -- начальное значение.
-     * @param a -- коллекция.
+     * @param collection -- коллекция.
      */
-    public static <X, Y> X foldr(Function2<Y, X, X> f, X first, Iterable<? extends Y> a) {
+    public static <X, Y> X foldr(Function2<Y, ? super X, ? extends X> f, X first, Iterable<? extends Y> collection) {
         ArrayList<Y> arrayList = new ArrayList<Y>();
-        for (Y element : a) {
+        for (Y element : collection) {
             arrayList.add(element);
         }
         reverse(arrayList);

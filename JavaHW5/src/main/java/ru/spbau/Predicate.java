@@ -5,10 +5,25 @@ package ru.spbau;
  * Класс, описывающий предикат.
  * @param <T> -- тип аргумента предиката.
  */
-public interface Predicate<T> {
+public interface Predicate<T> extends Function1<T, Boolean> {
 
-    Predicate ALWAYS_TRUE = x -> true;
-    Predicate ALWAYS_FALSE = x -> false;
+    public static <U> Predicate<U> ALWAYS_TRUE() {
+        return new Predicate<U>() {
+            @Override
+            public Boolean apply(U x) {
+                return true;
+            }
+        };
+    }
+
+    public static <U> Predicate<U> ALWAYS_FALSE() {
+        return new Predicate<U>() {
+            @Override
+            public Boolean apply(U x) {
+                return false;
+            }
+        };
+    }
 
     /**
      * Принимает один предикат в качестве аргумента, возвращает предикат, который ведет себя,
@@ -32,12 +47,5 @@ public interface Predicate<T> {
     default Predicate<T> not() {
         return x -> !apply(x);
     }
-
-    /**
-     * Применение предиката.
-     * Принимает x.
-     * Возвращает p(x).
-     */
-    boolean apply(T x);
 
 }

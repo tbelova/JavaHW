@@ -21,8 +21,8 @@ public class PredicateTest {
         assertTrue(mult3.apply(111));
         assertFalse(mult3.apply(5));
 
-        assertTrue(Predicate.ALWAYS_TRUE.apply(100));
-        assertFalse(Predicate.ALWAYS_FALSE.apply(100));
+        assertTrue((boolean)Predicate.ALWAYS_TRUE().apply(100));
+        assertFalse((boolean)Predicate.ALWAYS_FALSE().apply(100));
     }
 
     @Test
@@ -53,8 +53,8 @@ public class PredicateTest {
 
     @Test
     public void not() throws Exception {
-        assertTrue(Predicate.ALWAYS_FALSE.not().apply(100));
-        assertFalse(Predicate.ALWAYS_TRUE.not().apply(100));
+        assertTrue(Predicate.ALWAYS_FALSE().not().apply(100));
+        assertFalse(Predicate.ALWAYS_TRUE().not().apply(100));
 
         assertTrue(even.not().apply(1));
     }

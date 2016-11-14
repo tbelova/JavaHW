@@ -21,7 +21,7 @@ public class CollectionsTest {
     }
 
     @Test
-    public void map() throws Exception {
+    public void mapTest() throws Exception {
         Iterable b = Collections.map(x -> x * 2, a);
 
         Iterator<Integer> ita = a.iterator();
@@ -34,7 +34,7 @@ public class CollectionsTest {
     }
 
     @Test
-    public void filter() throws Exception {
+    public void filterTest() throws Exception {
         Iterable b = Collections.filter(x -> x % 2 == 0, a);
 
         Iterator<Integer> itb = b.iterator();
@@ -46,7 +46,7 @@ public class CollectionsTest {
     }
 
     @Test
-    public void takeWhile() throws Exception {
+    public void takeWhileTest() throws Exception {
         Iterable b = Collections.takeWhile(x -> x < 30, a);
         Iterator<Integer> itb = b.iterator();
         for (int i = 0; i < 30; i++) {
@@ -57,7 +57,19 @@ public class CollectionsTest {
     }
 
     @Test
-    public void foldl() throws Exception {
+    public void takeUnlessTest() throws Exception {
+        Iterable b = Collections.takeUnless(x -> x >= 30, a);
+        Iterator<Integer> itb = b.iterator();
+        for (int i = 0; i < 30; i++) {
+            assertTrue(itb.hasNext());
+            assertEquals(i, (int)itb.next());
+        }
+        assertFalse(itb.hasNext());
+    }
+
+
+    @Test
+    public void foldlTest() throws Exception {
         Function2<Integer, Integer, Integer> sum = (x, y) -> x + y;
         Function2<Integer, Integer, Integer> fst = (x, y) -> x;
         Function2<Integer, Integer, Integer> lst = (x, y) -> y;
@@ -67,7 +79,7 @@ public class CollectionsTest {
     }
 
     @Test
-    public void foldr() throws Exception {
+    public void foldrTest   () throws Exception {
         Function2<Integer, Integer, Integer> sum = (x, y) -> x + y;
         Function2<Integer, Integer, Integer> fst = (x, y) -> x;
         Function2<Integer, Integer, Integer> lst = (x, y) -> y;
