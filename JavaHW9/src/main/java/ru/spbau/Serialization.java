@@ -9,7 +9,9 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
 import java.util.Scanner;
 
+/** Класс с методами serialize и deserialize.*/
 public class Serialization {
+    /**  Записывает состояние полей переданного объекта в поток.*/
     public static void serialize(@NotNull Object object, @NotNull OutputStream outputStream) throws IOException {
         OutputStreamWriter writer = new OutputStreamWriter(outputStream);
 
@@ -29,6 +31,7 @@ public class Serialization {
         writer.flush();
     }
 
+    /** Создаёт экземпляр класса и инициализирует его поля данными из потока.*/
     public static <T> T deserialize(@NotNull InputStream inputStream, @NotNull Class<T> clazz) {
         Scanner scanner = new Scanner(inputStream);
         T object;
