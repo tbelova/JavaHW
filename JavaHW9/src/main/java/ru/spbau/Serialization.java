@@ -12,16 +12,21 @@ import java.util.Scanner;
 public class Serialization {
     public static void serialize(@NotNull Object object, @NotNull OutputStream outputStream) throws IOException {
         OutputStreamWriter writer = new OutputStreamWriter(outputStream);
-        for (Field field: object.getClass().getFields()) {
+
+        for (Field field: object.getClass().getDeclaredFields()) {
+            if (field.isSynthetic()) {
+                continue;
+            }
             field.setAccessible(true);
             try {
-                Object fieldValue = null;
+                Object fieldValue;
                 fieldValue = field.get(object);
-                writer.write(fieldValue.toString());
+                writer.write(fieldValue.toString() + "\n");
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }
+        writer.flush();
     }
 
     public static <T> T deserialize(@NotNull InputStream inputStream, @NotNull Class<T> clazz) {
@@ -32,7 +37,11 @@ public class Serialization {
         } catch (InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-        for (Field field: clazz.getFields()) {
+        for (Field field: clazz.getDeclaredFields()) {
+            if (field.isSynthetic()) {
+                continue;
+            }
+            field.setAccessible(true);
             try {
                 if (field.getType() == Character.TYPE) {
                     field.set(object, scanner.findInLine(".").charAt(0));
@@ -57,6 +66,9 @@ public class Serialization {
                 }
                 if (field.getType() == Double.TYPE) {
                     field.set(object, scanner.nextDouble());
+                }
+                if (field.getType() == String.class) {
+                    field.set(object, scanner.next());
                 }
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
