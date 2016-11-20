@@ -21,9 +21,15 @@ public class Serialization {
             }
             field.setAccessible(true);
             try {
-                Object fieldValue;
-                fieldValue = field.get(object);
-                writer.write(fieldValue.toString() + "\n");
+                if (field.getType() == String.class) {
+                    String s = (String)field.get(object);
+                    writer.write(s.length() + "\n");
+                    for (int i = 0; i < s.length(); i++) {
+                        writer.write((int)s.charAt(i) + "\n");
+                    }
+                } else {
+                    writer.write(field.get(object) + "\n");
+                }
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
@@ -71,7 +77,12 @@ public class Serialization {
                     field.set(object, scanner.nextDouble());
                 }
                 if (field.getType() == String.class) {
-                    field.set(object, scanner.next());
+                    int numberOfCharacters = scanner.nextInt();
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (int i = 0; i < numberOfCharacters; i++) {
+                        stringBuilder.append((char)scanner.nextInt());
+                    }
+                    field.set(object, stringBuilder.toString());
                 }
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);

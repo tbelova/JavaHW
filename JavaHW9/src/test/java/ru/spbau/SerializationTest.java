@@ -50,7 +50,7 @@ public class SerializationTest {
     public void serializationAndDeserializationTest() throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        Clazz clazz = new Clazz(1, 2, "Heey", 4, "lol", "yay");
+        Clazz clazz = new Clazz(1, 2, "Heey \n hoooh", 4, "lol", "yay");
 
         Serialization.serialize(clazz, outputStream);
         Clazz res = Serialization.deserialize(new ByteArrayInputStream(outputStream.toByteArray()), Clazz.class);
