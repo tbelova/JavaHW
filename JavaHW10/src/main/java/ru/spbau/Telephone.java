@@ -2,6 +2,7 @@ package ru.spbau;
 
 import org.mongodb.morphia.annotations.*;
 
+/** Запись в базе данных, хранящая имя и номер телефона.*/
 @Entity
 public class Telephone implements Comparable<Telephone> {
     @Id
@@ -17,14 +18,17 @@ public class Telephone implements Comparable<Telephone> {
         this.telephoneNumber = telephoneNumber;
     }
 
+    /** Выводит запись на экран.*/
     public void print() {
         System.out.println(name + ": " + telephoneNumber);
     }
 
+    /** Возвращает имя.*/
     public String getName() {
         return name;
     }
 
+    /** Возвращает номер телефона.*/
     public String getTelephoneNumber() {
         return telephoneNumber;
     }
