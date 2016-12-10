@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/JavaHW11.iml" filepath="$PROJECT_DIR$/.idea/modules/JavaHW11.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/JavaHW11_main.iml" filepath="$PROJECT_DIR$/.idea/modules/JavaHW11_main.iml" group="JavaHW11" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/JavaHW11_test.iml" filepath="$PROJECT_DIR$/.idea/modules/JavaHW11_test.iml" group="JavaHW11" />
+    </modules>
+  </component>
+</project>
