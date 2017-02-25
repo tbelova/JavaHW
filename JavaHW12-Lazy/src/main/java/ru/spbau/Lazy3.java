@@ -25,7 +25,7 @@ public class Lazy3<T> implements Lazy<T> {
      */
     public T get() {
         value.compareAndSet(Nothing.getValue(), supplier.get());
-        return (T)value;
+        return (T)value.get();
     }
 
 }
