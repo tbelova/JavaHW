@@ -1,5 +1,7 @@
 package ru.spbau;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.function.Supplier;
 
 /**
@@ -11,17 +13,17 @@ import java.util.function.Supplier;
 public class LazyFactory {
 
     /** Возвращает объект Lazy1 */
-    public static <T> Lazy<T> createLazy1(Supplier<T> supplier) {
+    public static <T> @NotNull Lazy<T> createLazy1(@NotNull Supplier<T> supplier) {
         return new Lazy1<>(supplier);
     }
 
     /** Возвращает объект Lazy2 */
-    public static <T> Lazy<T> createLazy2(Supplier<T> supplier) {
+    public static <T> @NotNull Lazy<T> createLazy2(@NotNull Supplier<T> supplier) {
         return new Lazy2<>(supplier);
     }
 
     /** Возвращает объект Lazy3 */
-    public static <T> Lazy<T> createLazy3(Supplier<T> supplier) {
+    public static <T> @NotNull Lazy<T> createLazy3(@NotNull Supplier<T> supplier) {
         return new Lazy3<>(supplier);
     }
 

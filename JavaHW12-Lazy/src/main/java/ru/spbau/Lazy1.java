@@ -1,5 +1,8 @@
 package ru.spbau;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.function.Supplier;
 
 /**
@@ -12,7 +15,7 @@ public class Lazy1<T> implements Lazy<T> {
 
     private Supplier<T> supplier;
 
-    public Lazy1(Supplier<T> supplier) {
+    public Lazy1(@NotNull Supplier<T> supplier) {
         this.supplier = supplier;
     }
 
@@ -21,7 +24,8 @@ public class Lazy1<T> implements Lazy<T> {
      * - Повторные вызовы get() возвращают тот же объект, что и первый вызов
      * - Вычисление запускается не более одного раза
      */
-    public T get() {
+    @SuppressWarnings("unchecked")
+    public @Nullable T get() {
         if (value == Nothing.getValue()) {
             value = supplier.get();
         }
