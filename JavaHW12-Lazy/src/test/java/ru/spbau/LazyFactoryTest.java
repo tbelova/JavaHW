@@ -96,7 +96,7 @@ public class LazyFactoryTest {
     }
 
     private Supplier<Integer> returningNullSupplier = new Supplier<Integer>() {
-        int n = 0;
+        private int n = 0;
         @Override
         public Integer get() {
             if (n == 0) {
