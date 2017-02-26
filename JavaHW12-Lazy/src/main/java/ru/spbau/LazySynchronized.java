@@ -6,16 +6,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 /**
- * Реализация интерфейса Lazy с гарантией корректной работы в однопоточном режиме
+ * Реализация интерфейса Lazy с гарантией корректной работы в многопоточном режиме
  * Вычисление запускается не более одного раза
  */
-public class Lazy1<T> implements Lazy<T> {
+public class LazySynchronized<T> implements Lazy<T> {
 
-    private Object value = Nothing.getValue();
+    private volatile Object value = Nothing.getValue();
 
     private Supplier<T> supplier;
 
-    public Lazy1(@NotNull Supplier<T> supplier) {
+    public LazySynchronized(@NotNull Supplier<T> supplier) {
         this.supplier = supplier;
     }
 
@@ -27,7 +27,12 @@ public class Lazy1<T> implements Lazy<T> {
     @SuppressWarnings("unchecked")
     public @Nullable T get() {
         if (value == Nothing.getValue()) {
-            value = supplier.get();
+            synchronized(this) {
+                if (value == Nothing.getValue()) {
+                    value = supplier.get();
+                    supplier = null;
+                }
+            }
         }
         return (T)value;
     }

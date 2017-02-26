@@ -7,7 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 public class LazyFactoryTest {
 
@@ -28,25 +29,25 @@ public class LazyFactoryTest {
     }
 
     @Test
-    public void simpleCreateLazy1Test() throws Exception {
-        simpleLazyIntegerTest(LazyFactory.createLazy1(integerSupplier));
+    public void simpleCreateLazyOneThreadTest() throws Exception {
+        simpleLazyIntegerTest(LazyFactory.createLazyOneThread(integerSupplier));
     }
 
     @Test
-    public void simpleCreateLazy2Test() throws Exception {
-        simpleLazyIntegerTest(LazyFactory.createLazy2(integerSupplier));
+    public void simpleCreateLazySynchronizedTest() throws Exception {
+        simpleLazyIntegerTest(LazyFactory.createLazySynchronized(integerSupplier));
     }
 
     @Test
-    public void simpleCreateLazy3Test() throws Exception {
-        simpleLazyIntegerTest(LazyFactory.createLazy3(integerSupplier));
+    public void simpleCreateLazyLockFreeTest() throws Exception {
+        simpleLazyIntegerTest(LazyFactory.createLazyLockFree(integerSupplier));
     }
 
     private final List<Integer> resultList = new ArrayList<>();
 
     private class LazyIntegerRunnable implements Runnable {
 
-        Lazy<Integer> lazy;
+        private Lazy<Integer> lazy;
 
         public LazyIntegerRunnable(@NotNull Lazy<Integer> lazy) {
             this.lazy = lazy;
@@ -82,13 +83,39 @@ public class LazyFactoryTest {
     }
 
     @Test
-    public void createLazy2Test() throws Exception {
-        lazyIntegerTest(LazyFactory.createLazy2(integerSupplier));
+    public void createLazySynchronizedTest() throws Exception {
+        lazyIntegerTest(LazyFactory.createLazySynchronized(integerSupplier));
+        assertEquals((Integer)2, integerSupplier.get());
     }
 
     @Test
-    public void createLazy3Test() throws Exception {
-        lazyIntegerTest(LazyFactory.createLazy3(integerSupplier));
+    public void createLazyLockFreeTest() throws Exception {
+        lazyIntegerTest(LazyFactory.createLazyLockFree(integerSupplier));
+    }
+
+    private Supplier<Integer> returningNullSupplier = new Supplier<Integer>() {
+        int n = 0;
+        @Override
+        public Integer get() {
+            if (n == 0) {
+                n++;
+                return null;
+            }
+            return n++;
+        }
+    };
+
+    @Test
+    public void workWithNullSimpleTest() throws Exception {
+        simpleLazyIntegerTest(LazyFactory.createLazyOneThread(returningNullSupplier));
+        simpleLazyIntegerTest(LazyFactory.createLazySynchronized(returningNullSupplier));
+        simpleLazyIntegerTest(LazyFactory.createLazyLockFree(returningNullSupplier));
+    }
+
+    @Test
+    public void workWithNullTest() throws Exception {
+        lazyIntegerTest(LazyFactory.createLazySynchronized(returningNullSupplier));
+        lazyIntegerTest(LazyFactory.createLazyLockFree(returningNullSupplier));
     }
 
 }

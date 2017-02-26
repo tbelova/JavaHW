@@ -3,7 +3,7 @@ package ru.spbau;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Supplier;
 
 /**
@@ -11,13 +11,18 @@ import java.util.function.Supplier;
  * Вычисление может производиться более одного раза
  * Lazy.get всегда возвращает один и тот же объект
  */
-public class Lazy3<T> implements Lazy<T> {
+public class LazyLockFree<T> implements Lazy<T> {
 
-    private AtomicReference<Object> value = new AtomicReference<>(Nothing.getValue());
+    //private AtomicReference<Object> value = new AtomicReference<>(Nothing.getValue());
+
+    private volatile Object value;
+
+    private static final AtomicReferenceFieldUpdater<LazyLockFree, Object> fieldUpdater =
+            AtomicReferenceFieldUpdater.newUpdater(LazyLockFree.class, Object.class, "value");
 
     private Supplier<T> supplier;
 
-    public Lazy3(@NotNull Supplier<T> supplier) {
+    public LazyLockFree(@NotNull Supplier<T> supplier) {
         this.supplier = supplier;
     }
 
@@ -28,8 +33,12 @@ public class Lazy3<T> implements Lazy<T> {
      */
     @SuppressWarnings("unchecked")
     public @Nullable T get() {
-        value.compareAndSet(Nothing.getValue(), supplier.get());
-        return (T)value.get();
+        Supplier<T> tmpSupplier = supplier;
+        if (tmpSupplier != null) {
+            fieldUpdater.compareAndSet(this, Nothing.getValue(), tmpSupplier.get());
+            supplier = null;
+        }
+        return (T)value;
     }
 
 }
