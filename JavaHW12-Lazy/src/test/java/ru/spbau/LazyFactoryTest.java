@@ -13,7 +13,8 @@ import static org.junit.Assert.assertSame;
 public class LazyFactoryTest {
 
     private Supplier<Integer> integerSupplier = new Supplier<Integer>() {
-        Integer num = 0;
+        private Integer num = 0;
+
         @Override
         public Integer get() {
             num++;
@@ -85,7 +86,8 @@ public class LazyFactoryTest {
     @Test
     public void createLazySynchronizedTest() throws Exception {
         lazyIntegerTest(LazyFactory.createLazySynchronized(integerSupplier));
-        assertEquals((Integer)2, integerSupplier.get());
+        Integer expectedValueForSecondRequest = 2;
+        assertEquals(expectedValueForSecondRequest, integerSupplier.get());
     }
 
     @Test

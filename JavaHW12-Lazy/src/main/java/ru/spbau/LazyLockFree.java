@@ -13,8 +13,6 @@ import java.util.function.Supplier;
  */
 public class LazyLockFree<T> implements Lazy<T> {
 
-    //private AtomicReference<Object> value = new AtomicReference<>(Nothing.getValue());
-
     private volatile Object value;
 
     private static final AtomicReferenceFieldUpdater<LazyLockFree, Object> fieldUpdater =
