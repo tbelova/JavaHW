@@ -12,15 +12,22 @@ import static org.junit.Assert.assertSame;
 
 public class LazyFactoryTest {
 
-    private Supplier<Integer> integerSupplier = new Supplier<Integer>() {
+    private static class IntegerSupplierWithRequestCounter implements Supplier<Integer> {
         private Integer num = 0;
+        private int requestNumber = 0;
+
+        public int getRequestNumber() {
+            return requestNumber;
+        }
 
         @Override
         public Integer get() {
-            num++;
-            return num;
+            requestNumber++;
+            return num++;
         }
-    };
+    }
+
+    private IntegerSupplierWithRequestCounter integerSupplier = new IntegerSupplierWithRequestCounter();
 
     private void simpleLazyIntegerTest(@NotNull Lazy<Integer> lazy) throws Exception {
         Integer n = lazy.get();
@@ -86,8 +93,7 @@ public class LazyFactoryTest {
     @Test
     public void createLazySynchronizedTest() throws Exception {
         lazyIntegerTest(LazyFactory.createLazySynchronized(integerSupplier));
-        Integer expectedValueForSecondRequest = 2;
-        assertEquals(expectedValueForSecondRequest, integerSupplier.get());
+        assertEquals(1, integerSupplier.getRequestNumber());
     }
 
     @Test
