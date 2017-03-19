@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Repository {
@@ -129,14 +130,15 @@ public class Repository {
 
     public void commit(String message) throws IOException, MyExceptions.WrongFormatException {
         List<String> lines = Files.readAllLines(realIndex);
-        Tree root = getHEADTree();
+        List<PathWithSHA> pathsWithSHALine = new ArrayList<>();
         for (String line: lines) {
             String[] strings = line.split(" ");
             if (strings.length != 2) {
                 throw new MyExceptions.WrongFormatException();
             }
-            root = root.add(repositoryPath.relativize(Paths.get(strings[0])), Paths.get(strings[0]), strings[1]);
+            pathsWithSHALine.add(new PathWithSHA(Paths.get(strings[0]), strings[1]));
         }
+        Tree root = getTreeForCommit(pathsWithSHALine);
         ArrayList<Commit> parents = new ArrayList<>();
         parents.add(getHEADCommit());
         Commit commit = new Commit(message, root, parents);
@@ -145,6 +147,15 @@ public class Repository {
         } else {
             writeToHEAD(commit);
         }
+    }
+
+    private Tree getTreeForCommit(List<PathWithSHA> lines) throws IOException, MyExceptions.WrongFormatException {
+        Tree root = getHEADTree();
+        for (PathWithSHA line: lines) {
+            root = root.add(repositoryPath.relativize(line.getPath()), line.getPath(), line.getSHA());
+        }
+
+        return root;
     }
 
     public void checkout(String branchName) throws MyExceptions.NotFoundException, IOException {
@@ -183,15 +194,41 @@ public class Repository {
         }
     }
 
-    public String currentBranch() throws IOException, MyExceptions.WrongFormatException {
+    public String getCurrentBranch() throws IOException, MyExceptions.WrongFormatException {
         return getHeadBranch().getName();
     }
 
     public List<CommitWithMessage> log() throws IOException, MyExceptions.WrongFormatException {
         Commit rootCommit = getHEADCommit();
         List<Commit> commits = rootCommit.log();
+        commits = commits.stream().distinct().collect(Collectors.toList());
         Collections.sort(commits, Commit::compareTo);
         return CommitWithMessage.commitsWithMessagesFromCommits(commits);
+    }
+
+    public void merge(String branchName) throws MyExceptions.NotFoundException,
+            IOException, MyExceptions.WrongFormatException {
+        Branch curBranch = getHeadBranch();
+        Branch branch = findBranch(branchName);
+        if (branch == null) {
+            throw new MyExceptions.NotFoundException();
+        }
+
+        List<Commit> parents = new ArrayList<>();
+        parents.add(curBranch.getCommit());
+        parents.add(branch.getCommit());
+
+        List<PathWithSHA> pathsWithSHA = curBranch.getCommit().getTree().constructOriginalPaths(repositoryPath);
+        List<PathWithSHA> pathsWithSHAOther = branch.getCommit().getTree().constructOriginalPaths(repositoryPath);
+
+        pathsWithSHA.addAll(pathsWithSHAOther);
+
+        Tree root = getTreeForCommit(pathsWithSHA);
+
+        Commit commit = new Commit("Merge " + branchName + " into " + curBranch.getName() + ".", root, parents);
+        curBranch.setCommit(commit);
+
+        updateIndex(commit);
     }
 
     private Repository(Path path) throws IOException {
@@ -320,6 +357,51 @@ public class Repository {
         for (PathWithSHA line: pathsWithSHA) {
             outputStream.write((line.getPath() + " " + line.getSHA() + "\n").getBytes());
         }
+        outputStream.close();
+
+        updateUserDirectory(pathsWithSHA);
+    }
+
+    private void updateUserDirectory(List<PathWithSHA> pathsWithSHA) throws IOException {
+        Stream<Path> pathStream = Files.walk(repositoryPath);
+        pathStream.forEach(path -> {
+            if (!path.equals(repositoryPath) && !path.startsWith(realVcs)) {
+                if (Files.isDirectory(path)) {
+                    try {
+                        FileUtils.deleteDirectory(path.toFile());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        for (PathWithSHA pathWithSHA: pathsWithSHA) {
+            addFile(pathWithSHA.getPath(), pathWithSHA.getSHA());
+        }
+
+    }
+
+    private void addFile(Path path, String sha) throws IOException {
+        Files.createDirectories(path.getParent());
+        OutputStream outputStream = Files.newOutputStream(path);
+        Stream<Path> pathStream = Files.walk(repositoryPath);
+        pathStream.forEach(vcsobject -> {
+            if (vcsobject.getFileName().toString().equals(sha)) {
+                try {
+                    outputStream.write(Files.readAllBytes(vcsobject));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         outputStream.close();
     }
 
@@ -521,7 +603,7 @@ public class Repository {
             if (path.getNameCount() == 1) {
                 List<Blob> blobList = new ArrayList<>(blobs);
                 List<Tree> treeList = new ArrayList<>(trees);
-                blobList.add(new Blob(path.getName(0).toString(), Files.readAllBytes(fullPath)));
+                blobList.add(findBlob(path.getName(0).toString(), hash));
                 return new Tree(name, treeList, blobList);
             } else {
                 List<Tree> treeList = new ArrayList<>();
@@ -544,6 +626,29 @@ public class Repository {
                 return new Tree(name, treeList, blobList);
             }
 
+        }
+
+        private Blob findBlob(String name, String hash) throws IOException {
+            Stream<Path> pathStream = Files.walk(realObjects);
+            return pathStream.reduce(null, (Blob blob, Path path) -> {
+                if (path.getFileName().toString().equals(hash)) {
+                    Blob resultBlob = null;
+                    try {
+                        resultBlob = readBlob(name, path);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    return resultBlob;
+                } else {
+                    return blob;
+                }
+            }, (Blob blob1, Blob blob2) -> {
+                if (blob1 == null) {
+                    return blob2;
+                } else {
+                    return blob1;
+                }
+            });
         }
 
         public List<PathWithSHA> constructOriginalPaths(Path path) {
