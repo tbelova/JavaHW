@@ -4,9 +4,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,91 +26,151 @@ public class RepositoryTest {
     }
 
     @Test
-    public void addTest() throws Exception {
+    public void simpleAddTest() throws Exception {
         Repository repository = Repository.getRepository(repositoryPath);
-        if (!Files.exists(repositoryPath.resolve("dir1"))) {
-            Files.createDirectory(repositoryPath.resolve("dir1"));
-        }
-        if (!Files.exists(repositoryPath.resolve("dir1/file1"))) {
-            Files.createFile(repositoryPath.resolve("dir1/file1"));
-        }
-        if (!Files.exists(repositoryPath.resolve("dir1/file2"))) {
-            Files.createFile(repositoryPath.resolve("dir1/file2"));
-        }
-        OutputStream outputStream;
-        outputStream = Files.newOutputStream(repositoryPath.resolve("dir1/file1"));
-        outputStream.write(("yay").getBytes());
-        outputStream.close();
-        outputStream = Files.newOutputStream(repositoryPath.resolve("dir1/file2"));
-        outputStream.write(("heeey! \n lalala").getBytes());
-        outputStream.close();
+
+        Files.createDirectory(repositoryPath.resolve("dir1"));
+        Files.createFile(repositoryPath.resolve("dir1/file1"));
+        Files.createFile(repositoryPath.resolve("dir1/file2"));
+
         repository.add(repositoryPath.resolve("dir1/file1"));
         repository.add(repositoryPath.resolve("dir1/file2"));
+
+        assertTrue(Files.exists(repositoryPath.resolve("dir1/file1")));
+        assertTrue(Files.exists(repositoryPath.resolve("dir1/file2")));
     }
 
     @Test
     public void simpleWorkWithBranchesTest() throws Exception {
         Repository repository = Repository.getRepository(repositoryPath);
+
+        assertEquals("master", repository.getCurrentBranch());
+
         repository.branch("super_branch");
         repository.checkout("super_branch");
+
+        assertEquals("super_branch", repository.getCurrentBranch());
+
         repository.removeBranch("master");
+        repository.createBranchAndCheckout("super_master");
+
+        assertEquals("super_master", repository.getCurrentBranch());
     }
 
     @Test
-    public void commitTest() throws Exception {
+    public void simpleCommitTest() throws Exception {
         Repository repository = Repository.getRepository(repositoryPath);
         repository.commit("First commit!");
+    }
+
+    @Test
+    public void simpleAddAndCommitTest() throws Exception {
+        Repository repository = Repository.getRepository(repositoryPath);
+
+        Files.createDirectory(repositoryPath.resolve("dir1"));
+        Files.createFile(repositoryPath.resolve("dir1/file1"));
+        Files.createFile(repositoryPath.resolve("dir1/file2"));
+
+        repository.add(repositoryPath.resolve("dir1/file1"));
+        repository.add(repositoryPath.resolve("dir1/file2"));
+
+        repository.commit("First commit!");
+    }
+
+    @Test
+    public void workWithBranchesTest() throws Exception {
+        Repository repository = Repository.getRepository(repositoryPath);
+
+        assertFalse(Files.exists(repositoryPath.resolve("dir1/file1")));
+
+        repository.createBranchAndCheckout("new_branch");
+
+        Files.createDirectory(repositoryPath.resolve("dir1"));
+        Files.createFile(repositoryPath.resolve("dir1/file1"));
+
+        repository.add(repositoryPath.resolve("dir1/file1"));
+
+        assertTrue(Files.exists(repositoryPath.resolve("dir1/file1")));
+
+        repository.commit("First commit!");
+
+        repository.checkout("master");
+
+        assertFalse(Files.exists(repositoryPath.resolve("dir1/file1")));
+
+        repository.checkout("new_branch");
+
+        assertTrue(Files.exists(repositoryPath.resolve("dir1/file1")));
+    }
+
+    @Test
+    public void simpleLogTest() throws Exception {
+        Repository repository = Repository.getRepository(repositoryPath);
+        repository.commit("First commit!");
+        repository.commit("Second commit!");
+        List<CommitWithMessage> commitWithMessageList = repository.log();
+        assertEquals(3, commitWithMessageList.size());
+        assertEquals("Initial commit", commitWithMessageList.get(0).getMessage());
+        assertEquals("First commit!", commitWithMessageList.get(1).getMessage());
+        assertEquals("Second commit!", commitWithMessageList.get(2).getMessage());
     }
 
     @Test
     public void logTest() throws Exception {
         Repository repository = Repository.getRepository(repositoryPath);
-        repository.commit("First commit!");
-        List<CommitWithMessage> commitWithMessageList = repository.log();
-        for (CommitWithMessage commitWithMessage: commitWithMessageList) {
-            System.out.println(commitWithMessage.getCommit() + " " + commitWithMessage.getMessage());
-        }
+
+        assertEquals(1, repository.log().size());
+
+        repository.commit("commit to master-2");
+
+        assertEquals(2, repository.log().size());
+
+        repository.createBranchAndCheckout("new_branch");
+
+        assertEquals(2, repository.log().size());
+
+        repository.commit("commit to new branch-1");
+
+        assertEquals(3, repository.log().size());
+
+        repository.checkout("master");
+        assertEquals(2, repository.log().size());
     }
 
     @Test
     public void simpleMergeTest() throws Exception {
         Repository repository = Repository.getRepository(repositoryPath);
 
-        repository.branch("first");
-        repository.checkout("first");
+        repository.createBranchAndCheckout("first");
 
-        if (!Files.exists(repositoryPath.resolve("dir1"))) {
-            Files.createDirectory(repositoryPath.resolve("dir1"));
-        }
+        repository.commit("first-1");
+        assertEquals(2, repository.log().size());
 
-        if (!Files.exists(repositoryPath.resolve("dir1/file1"))) {
-            Files.createFile(repositoryPath.resolve("dir1/file1"));
-            OutputStream outputStream;
-            outputStream = Files.newOutputStream(repositoryPath.resolve("dir1/file1"));
-            outputStream.write(("yay").getBytes());
-            outputStream.close();
+        repository.checkout("master");
+        assertEquals(1, repository.log().size());
 
-        }
+        repository.merge("first");
+        assertEquals(3, repository.log().size());
+    }
+
+    @Test
+    public void mergeTest() throws Exception {
+        Repository repository = Repository.getRepository(repositoryPath);
+
+        repository.createBranchAndCheckout("first");
+
+        Files.createDirectory(repositoryPath.resolve("dir1"));
+
+        Files.createFile(repositoryPath.resolve("dir1/file1"));
 
         repository.add(repositoryPath.resolve("dir1/file1"));
         repository.commit("First commit");
 
         repository.checkout("master");
+        repository.createBranchAndCheckout("second");
 
-        repository.branch("second");
-        repository.checkout("second");
-
-        if (!Files.exists(repositoryPath.resolve("dir1"))) {
-            Files.createDirectory(repositoryPath.resolve("dir1"));
-        }
-
-        if (!Files.exists(repositoryPath.resolve("dir1/file2"))) {
-            Files.createFile(repositoryPath.resolve("dir1/file2"));
-            OutputStream outputStream;
-            outputStream = Files.newOutputStream(repositoryPath.resolve("dir1/file2"));
-            outputStream.write(("heeey! \nlalala").getBytes());
-            outputStream.close();
-        }
+        Files.createDirectory(repositoryPath.resolve("dir1"));
+        Files.createFile(repositoryPath.resolve("dir1/file2"));
 
         repository.add(repositoryPath.resolve("dir1/file2"));
         repository.commit("Second commit");
@@ -131,21 +188,11 @@ public class RepositoryTest {
         repository.branch("third");
         repository.checkout("third");
 
-        if (!Files.exists(repositoryPath.resolve("dir2"))) {
-            Files.createDirectory(repositoryPath.resolve("dir2"));
-        }
-
-        if (!Files.exists(repositoryPath.resolve("dir2/file1"))) {
-            Files.createFile(repositoryPath.resolve("dir2/file1"));
-            OutputStream outputStream;
-            outputStream = Files.newOutputStream(repositoryPath.resolve("dir2/file1"));
-            outputStream.write(("heeey! \nlalala").getBytes());
-            outputStream.close();
-        }
+        Files.createDirectory(repositoryPath.resolve("dir2"));
+        Files.createFile(repositoryPath.resolve("dir2/file1"));
 
         repository.add(repositoryPath.resolve("dir2/file1"));
         repository.commit("Third commit");
-
         repository.merge("second");
 
         assertTrue(Files.exists(repositoryPath.resolve("dir1/file1")));
@@ -163,11 +210,6 @@ public class RepositoryTest {
         assertTrue(Files.exists(repositoryPath.resolve("dir1/file1")));
         assertTrue(Files.exists(repositoryPath.resolve("dir1/file2")));
         assertTrue(Files.exists(repositoryPath.resolve("dir2/file1")));
-
-        List<CommitWithMessage> commitWithMessageList = repository.log();
-        for (CommitWithMessage commitWithMessage: commitWithMessageList) {
-            System.out.println(commitWithMessage.getCommit() + " " + commitWithMessage.getMessage());
-        }
 
     }
 

@@ -177,11 +177,20 @@ public class Repository {
 
     public void branch(String newBranchName) throws MyExceptions.AlreadyExistsException,
             IOException, MyExceptions.WrongFormatException {
+        if (newBranchName.contains(" ")) {
+            throw new MyExceptions.WrongFormatException();
+        }
         Branch branch = findBranch(newBranchName);
         if (branch != null) {
             throw new MyExceptions.AlreadyExistsException();
         }
         branches.add(new Branch(newBranchName, getHEADCommit()));
+    }
+
+    public void createBranchAndCheckout(String branchName) throws MyExceptions.WrongFormatException,
+            IOException, MyExceptions.AlreadyExistsException, MyExceptions.NotFoundException {
+        branch(branchName);
+        checkout(branchName);
     }
 
     public void removeBranch(String name) throws IOException, MyExceptions.WrongFormatException {
@@ -283,6 +292,7 @@ public class Repository {
         }
         String[] stringList = lines.get(0).split(" ");
         if (stringList.length != 2) {
+            System.out.println(lines.get(0));
             throw new MyExceptions.WrongFormatException();
         }
         return stringList[0];
@@ -451,10 +461,12 @@ public class Repository {
         try {
             List<String> lines = Files.readAllLines(path);
             List<Commit> parents = new ArrayList<>();
-            for (int i = 3; i < lines.size(); i++) {
+            for (int i = 4; i < lines.size(); i++) {
                 parents.add(readCommit(realObjects.resolve(lines.get(i))));
             }
-            return new Commit(lines.get(0), readTree("root", realObjects.resolve(lines.get(1))), readDate(lines.get(2)), parents);
+            return new Commit(lines.get(0),
+                    readTree("root", realObjects.resolve(lines.get(1))),
+                    readDate(lines.get(2)), lines.get(3), parents);
         } catch (Exception e) {
             return null;
         }
@@ -478,13 +490,15 @@ public class Repository {
         private String message;
         private List<Commit> parentCommits;
         private Date date;
+        private String author;
 
-        public Commit(String message, Tree tree, Date date, List<Commit> parents) throws IOException {
+        public Commit(String message, Tree tree, Date date, String author, List<Commit> parents) throws IOException {
             this.message = message;
             this.tree = tree;
             this.date = date;
+            this.author = author;
             parentCommits = new ArrayList<>(parents);
-            String contentString = message + "\n" + tree.getSHA() + "\n" + writeDate(date);
+            String contentString = message + "\n" + tree.getSHA() + "\n" + writeDate(date) + "\n" + author;
             for (Commit parentCommit: parentCommits) {
                 contentString += "\n" + parentCommit.getSHA();
             }
@@ -494,7 +508,7 @@ public class Repository {
         }
 
         public Commit(String message, Tree tree, List<Commit> parents) throws IOException {
-            this(message, tree, new Date(), parents);
+            this(message, tree, new Date(), System.getProperty("user.name"), parents);
         }
 
         public List<Commit> log() {
