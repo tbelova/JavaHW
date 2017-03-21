@@ -2,6 +2,8 @@ package ru.spbau;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -19,6 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/** Класс, который отвечает за работу с репозиторием.*/
 public class Repository {
 
     private static final Path vcsFolder = Paths.get(".vcsFolder");
@@ -36,10 +39,13 @@ public class Repository {
     private Path realRefs;
     private Path realBranches;
 
-
     private List<Branch> branches = new ArrayList<>();
 
-    static public Repository initRepository(Path path) throws IOException,
+    /**
+     * Принимает путь до папки и создает в ней новый репозиторий.
+     * Бросает исключение, если такой папки не существует или в ней уже создан репозиторий.
+     */
+    static public @NotNull Repository initRepository(@NotNull Path path) throws IOException,
             MyExceptions.IsNotDirectoryException, MyExceptions.AlreadyExistsException {
         if (!Files.isDirectory(path)) {
             throw new MyExceptions.IsNotDirectoryException();
@@ -61,11 +67,26 @@ public class Repository {
         return repository;
     }
 
-    public static void removeRepository(Path path) throws IOException {
+    /**
+     * Принимает путь до папки с репозиторием и удаляет ее.
+     * Бросает исключение, если такой папки не существует или в ней не был создан репозиторий.
+     * */
+    public static void removeRepository(@NotNull Path path) throws IOException,
+            MyExceptions.IsNotDirectoryException, MyExceptions.NotFoundException {
+        if (!Files.isDirectory(path)) {
+            throw new MyExceptions.IsNotDirectoryException();
+        }
+        if (!Files.exists(path.resolve(vcsFolder))) {
+            throw new MyExceptions.NotFoundException();
+        }
         FileUtils.deleteDirectory(path.toFile());
     }
 
-    public static Repository getRepository(Path path) throws IOException {
+    /**
+     * Принимает папку с репозиторием и возвращает по ней репозиторий.
+     * Бросает исключение, если в папке репозиторий не содержится или содержится в некорректном виде.
+     */
+    public static @NotNull Repository getRepository(@NotNull Path path) throws IOException, MyExceptions.NotFoundException {
         Path realVcs = path.resolve(vcsFolder);
         Path realHEAD = path.resolve(HEADFile);
         Path realIndex = path.resolve(indexFile);
@@ -84,13 +105,14 @@ public class Repository {
                 || Files.notExists(realRefs)
                 || !Files.isDirectory(realRefs)
                 || !Files.isDirectory(realBranches)) {
-            return null;
+            throw new MyExceptions.NotFoundException();
         }
 
         return new Repository(path);
     }
 
-    public void add(Path path) throws IOException, MyExceptions.WrongFormatException {
+    /** Принимает путь до файла, который был добавлен или удален, и изменяет информацию о нем в файле index.*/
+    public void add(@NotNull Path path) throws IOException, MyExceptions.WrongFormatException {
         if (!path.startsWith(repositoryPath)) {
             throw new MyExceptions.WrongFormatException();
         }
@@ -128,7 +150,8 @@ public class Repository {
         }
     }
 
-    public void commit(String message) throws IOException, MyExceptions.WrongFormatException {
+    /** Делает commit с заданным сообщением.*/
+    public void commit(@NotNull String message) throws IOException, MyExceptions.WrongFormatException {
         List<String> lines = Files.readAllLines(realIndex);
         List<PathWithSHA> pathsWithSHALine = new ArrayList<>();
         for (String line: lines) {
@@ -149,16 +172,11 @@ public class Repository {
         }
     }
 
-    private Tree getTreeForCommit(List<PathWithSHA> lines) throws IOException, MyExceptions.WrongFormatException {
-        Tree root = getHEADTree();
-        for (PathWithSHA line: lines) {
-            root = root.add(repositoryPath.relativize(line.getPath()), line.getPath(), line.getSHA());
-        }
-
-        return root;
-    }
-
-    public void checkout(String branchName) throws MyExceptions.NotFoundException, IOException {
+    /**
+     * Принимает название ветки/коммита и переключается на нее/него.
+     * Бросает иключение, если ни ветки, ни коммита с таким названием не найдено.
+     * */
+    public void checkout(@NotNull String branchName) throws MyExceptions.NotFoundException, IOException {
         Branch branchFound = findBranch(branchName);
         if (branchFound == null) {
             checkoutOnCommit(branchName);
@@ -167,15 +185,11 @@ public class Repository {
         }
     }
 
-    public void checkoutOnCommit(String name) throws IOException, MyExceptions.NotFoundException {
-        Commit commit = findCommit(name);
-        if (commit == null) {
-            throw new MyExceptions.NotFoundException();
-        }
-        writeToHEAD(commit);
-    }
-
-    public void branch(String newBranchName) throws MyExceptions.AlreadyExistsException,
+    /**
+     * Принимает строчку и создает ветку с таким названием.
+     * Бросает исключение, если ветка с таким названием уже существует.
+     */
+    public void branch(@NotNull String newBranchName) throws MyExceptions.AlreadyExistsException,
             IOException, MyExceptions.WrongFormatException {
         if (newBranchName.contains(" ")) {
             throw new MyExceptions.WrongFormatException();
@@ -187,13 +201,15 @@ public class Repository {
         branches.add(new Branch(newBranchName, getHEADCommit()));
     }
 
-    public void createBranchAndCheckout(String branchName) throws MyExceptions.WrongFormatException,
+    /** Создает ветку с указанным названием и сразу переключается на нее.*/
+    public void createBranchAndCheckout(@NotNull String branchName) throws MyExceptions.WrongFormatException,
             IOException, MyExceptions.AlreadyExistsException, MyExceptions.NotFoundException {
         branch(branchName);
         checkout(branchName);
     }
 
-    public void removeBranch(String name) throws IOException, MyExceptions.WrongFormatException {
+    /** Удаляет ветку с указанным названием.*/
+    public void removeBranch(@NotNull String name) throws IOException, MyExceptions.WrongFormatException {
         Branch branch = findBranch(name);
         if (branch != null) {
             if (!getTypeOfHEAD().equals(VCSObject.BRANCH) || getHeadBranch() != branch) {
@@ -203,19 +219,25 @@ public class Repository {
         }
     }
 
-    public String getCurrentBranch() throws IOException, MyExceptions.WrongFormatException {
+    /** Возвращает название текущей ветки.*/
+    public @NotNull String getCurrentBranch() throws IOException, MyExceptions.WrongFormatException {
         return getHeadBranch().getName();
     }
 
-    public List<CommitWithMessage> log() throws IOException, MyExceptions.WrongFormatException {
+    /** Возвращает отсортированный до дате создания список коммитов-предков текущего коммита.*/
+    public @NotNull List<CommitWithMessage> log() throws IOException, MyExceptions.WrongFormatException {
         Commit rootCommit = getHEADCommit();
         List<Commit> commits = rootCommit.log();
         commits = commits.stream().distinct().collect(Collectors.toList());
         Collections.sort(commits, Commit::compareTo);
-        return CommitWithMessage.commitsWithMessagesFromCommits(commits);
+        return commitsWithMessagesFromCommits(commits);
     }
 
-    public void merge(String branchName) throws MyExceptions.NotFoundException,
+    /**
+     * Принимает название ветки и сливает ее с текущей.
+     * Бросает исключение, если указанной ветки не существует.
+     * */
+    public void merge(@NotNull String branchName) throws MyExceptions.NotFoundException,
             IOException, MyExceptions.WrongFormatException {
         Branch curBranch = getHeadBranch();
         Branch branch = findBranch(branchName);
@@ -240,7 +262,7 @@ public class Repository {
         updateIndex(commit);
     }
 
-    private Repository(Path path) throws IOException {
+    private Repository(@NotNull Path path) throws IOException {
         repositoryPath = path;
         realVcs = path.resolve(vcsFolder);
         realHEAD = path.resolve(HEADFile);
@@ -251,7 +273,24 @@ public class Repository {
         readAllBranches();
     }
 
-    private Commit getHeadCommit() throws IOException, MyExceptions.WrongFormatException {
+    private void checkoutOnCommit(@NotNull String name) throws IOException, MyExceptions.NotFoundException {
+        Commit commit = findCommit(name);
+        if (commit == null) {
+            throw new MyExceptions.NotFoundException();
+        }
+        writeToHEAD(commit);
+    }
+
+    private @NotNull Tree getTreeForCommit(@NotNull List<PathWithSHA> lines) throws IOException, MyExceptions.WrongFormatException {
+        Tree root = getHEADTree();
+        for (PathWithSHA line: lines) {
+            root = root.add(repositoryPath.relativize(line.getPath()), line.getSHA());
+        }
+
+        return root;
+    }
+
+    private @NotNull Commit getHeadCommit() throws IOException, MyExceptions.WrongFormatException {
         List<String> lines = Files.readAllLines(realHEAD);
         if (lines.size() != 1) {
             throw new MyExceptions.WrongFormatException();
@@ -266,7 +305,7 @@ public class Repository {
         return readCommit(realObjects.resolve(stringList[1]));
     }
 
-    private Branch getHeadBranch() throws IOException, MyExceptions.WrongFormatException {
+    private @NotNull Branch getHeadBranch() throws IOException, MyExceptions.WrongFormatException {
         List<String> lines = Files.readAllLines(realHEAD);
         if (lines.size() != 1) {
             throw new MyExceptions.WrongFormatException();
@@ -285,7 +324,7 @@ public class Repository {
         return branch;
     }
 
-    private String getTypeOfHEAD() throws IOException, MyExceptions.WrongFormatException {
+    private @NotNull String getTypeOfHEAD() throws IOException, MyExceptions.WrongFormatException {
         List<String> lines = Files.readAllLines(realHEAD);
         if (lines.size() != 1) {
             throw new MyExceptions.WrongFormatException();
@@ -298,7 +337,7 @@ public class Repository {
         return stringList[0];
     }
 
-    private Commit getHEADCommit() throws IOException, MyExceptions.WrongFormatException {
+    private @NotNull Commit getHEADCommit() throws IOException, MyExceptions.WrongFormatException {
         if (getTypeOfHEAD().equals(VCSObject.BRANCH)) {
             return getHeadBranch().getCommit();
         } else {
@@ -306,11 +345,11 @@ public class Repository {
         }
     }
 
-    private Tree getHEADTree() throws IOException, MyExceptions.WrongFormatException {
+    private @NotNull Tree getHEADTree() throws IOException, MyExceptions.WrongFormatException {
         return getHEADCommit().getTree();
     }
 
-    private Branch findBranch(String name) {
+    private @Nullable Branch findBranch(@NotNull String name) {
         Branch branchFound = null;
         for (Branch branch: branches) {
             if (branch.name.equals(name)) {
@@ -320,7 +359,7 @@ public class Repository {
         return branchFound;
     }
 
-    private Commit findCommit(String name) throws IOException {
+    private @Nullable Commit findCommit(@NotNull String name) throws IOException {
         Stream<Path> pathStream = Files.walk(realObjects);
         return pathStream.reduce(null, (Commit commit, Path path) -> {
             if (path.getFileName().toString().equals(name)) {
@@ -343,7 +382,7 @@ public class Repository {
         writeToHEAD(branch);
     }
 
-    private void writeToHEAD(Branch branch) throws IOException {
+    private void writeToHEAD(@NotNull Branch branch) throws IOException {
         OutputStream outputStream = Files.newOutputStream(realHEAD);
         outputStream.write((VCSObject.BRANCH + " ").getBytes());
         outputStream.write(branch.getName().getBytes());
@@ -352,7 +391,7 @@ public class Repository {
         updateIndex(branch.getCommit());
     }
 
-    private void writeToHEAD(Commit commit) throws IOException {
+    private void writeToHEAD(@NotNull Commit commit) throws IOException {
         OutputStream outputStream = Files.newOutputStream(realHEAD);
         outputStream.write((VCSObject.COMMIT + " ").getBytes());
         outputStream.write(commit.getSHA().getBytes());
@@ -361,7 +400,7 @@ public class Repository {
         updateIndex(commit);
     }
 
-    private void updateIndex(Commit commit) throws IOException {
+    private void updateIndex(@NotNull Commit commit) throws IOException {
         List<PathWithSHA> pathsWithSHA = commit.getTree().constructOriginalPaths(repositoryPath);
         OutputStream outputStream = Files.newOutputStream(realIndex);
         for (PathWithSHA line: pathsWithSHA) {
@@ -372,7 +411,7 @@ public class Repository {
         updateUserDirectory(pathsWithSHA);
     }
 
-    private void updateUserDirectory(List<PathWithSHA> pathsWithSHA) throws IOException {
+    private void updateUserDirectory(@NotNull List<PathWithSHA> pathsWithSHA) throws IOException {
         Stream<Path> pathStream = Files.walk(repositoryPath);
         pathStream.forEach(path -> {
             if (!path.equals(repositoryPath) && !path.startsWith(realVcs)) {
@@ -398,7 +437,7 @@ public class Repository {
 
     }
 
-    private void addFile(Path path, String sha) throws IOException {
+    private void addFile(@NotNull Path path, @NotNull String sha) throws IOException {
         Files.createDirectories(path.getParent());
         OutputStream outputStream = Files.newOutputStream(path);
         Stream<Path> pathStream = Files.walk(repositoryPath);
@@ -427,25 +466,25 @@ public class Repository {
         } catch (Exception e) {}
     }
 
-    public class Branch {
+    private class Branch {
         private String name;
         private Commit commit;
 
-        public Branch(String name, Commit commit) throws IOException {
+        public Branch(@NotNull String name, @NotNull Commit commit) throws IOException {
             this.name = name;
             this.commit = commit;
             write();
         }
 
-        public String getName() {
+        public @NotNull String getName() {
             return name;
         }
 
-        public Commit getCommit() {
+        public @NotNull Commit getCommit() {
             return commit;
         }
 
-        public void setCommit(Commit commit) throws IOException {
+        public void setCommit(@NotNull Commit commit) throws IOException {
             this.commit = commit;
             write();
         }
@@ -457,7 +496,15 @@ public class Repository {
         }
     }
 
-    private Commit readCommit(Path path) {
+    private List<CommitWithMessage> commitsWithMessagesFromCommits(List<Commit> commits) {
+        List<CommitWithMessage> commitsWithMessages = new ArrayList<>();
+        for (Repository.Commit commit: commits) {
+            commitsWithMessages.add(new CommitWithMessage(commit.getSHA(), commit.getMessage()));
+        }
+        return commitsWithMessages;
+    }
+
+    private @Nullable Commit readCommit(@NotNull Path path) {
         try {
             List<String> lines = Files.readAllLines(path);
             List<Commit> parents = new ArrayList<>();
@@ -472,17 +519,17 @@ public class Repository {
         }
     }
 
-    private Date readDate(String date) throws ParseException {
+    private @NotNull Date readDate(@NotNull String date) throws ParseException {
         DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
         return df.parse(date);
     }
 
-    private String writeDate(Date date) {
+    private @NotNull String writeDate(@NotNull Date date) {
         DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
         return df.format(date);
     }
 
-    public class Commit extends VCSObject implements Comparable<Commit> {
+    private class Commit extends VCSObject implements Comparable<Commit> {
 
         private Tree tree;
         private String sha;
@@ -492,7 +539,8 @@ public class Repository {
         private Date date;
         private String author;
 
-        public Commit(String message, Tree tree, Date date, String author, List<Commit> parents) throws IOException {
+        public Commit(@NotNull String message, @NotNull Tree tree,
+                      @NotNull Date date, @NotNull String author, @NotNull List<Commit> parents) throws IOException {
             this.message = message;
             this.tree = tree;
             this.date = date;
@@ -507,11 +555,11 @@ public class Repository {
             write();
         }
 
-        public Commit(String message, Tree tree, List<Commit> parents) throws IOException {
+        public Commit(@NotNull String message, @NotNull Tree tree, @NotNull List<Commit> parents) throws IOException {
             this(message, tree, new Date(), System.getProperty("user.name"), parents);
         }
 
-        public List<Commit> log() {
+        public @NotNull List<Commit> log() {
             List<Commit> log = new ArrayList<>();
             log.add(this);
             for (Commit parent: parentCommits) {
@@ -523,30 +571,30 @@ public class Repository {
             return log;
         }
 
-        public String getMessage() {
+        public @NotNull String getMessage() {
             return message;
         }
 
-        public Tree getTree() {
+        public @NotNull Tree getTree() {
             return tree;
         }
 
-        public Date getDate() {
+        public @NotNull Date getDate() {
             return date;
         }
 
         @Override
-        public String getSHA() {
+        public @NotNull String getSHA() {
             return sha;
         }
 
         @Override
-        public String getType() {
+        public @NotNull String getType() {
             return VCSObject.COMMIT;
         }
 
         @Override
-        public byte[] getContent() {
+        public @NotNull byte[] getContent() {
             return content;
         }
 
@@ -561,12 +609,12 @@ public class Repository {
         }
 
         @Override
-        public int compareTo(Commit commit) {
+        public int compareTo(@NotNull Commit commit) {
             return date.compareTo(commit.getDate());
         }
     }
 
-    private Tree readTree(String name, Path path) throws MyExceptions.IsNotFileException,
+    private @NotNull Tree readTree(@NotNull String name, @NotNull Path path) throws MyExceptions.IsNotFileException,
             IOException, MyExceptions.WrongFormatException {
         if (!Files.isRegularFile(path)) {
             throw new MyExceptions.IsNotFileException();
@@ -574,7 +622,7 @@ public class Repository {
         return new Tree(name, path);
     }
 
-    public class Tree extends VCSObject {
+    private class Tree extends VCSObject {
 
         private String sha;
         private byte[] content;
@@ -583,7 +631,8 @@ public class Repository {
         private List<Tree> trees;
         private List<Blob> blobs;
 
-        public Tree(String name, Path path) throws IOException, MyExceptions.WrongFormatException, MyExceptions.IsNotFileException {
+        public Tree(@NotNull String name, @NotNull Path path) throws IOException,
+                MyExceptions.WrongFormatException, MyExceptions.IsNotFileException {
             content = Files.readAllBytes(path);
             trees = new ArrayList<>();
             blobs = new ArrayList<>();
@@ -606,11 +655,12 @@ public class Repository {
             }
         }
 
-        public String getName() {
+        public @NotNull String getName() {
             return name;
         }
 
-        public Tree add(Path path, Path fullPath, String hash) throws IOException, MyExceptions.WrongFormatException {
+        public @NotNull Tree add(@NotNull Path path, @NotNull String hash)
+                throws IOException, MyExceptions.WrongFormatException {
             if (path.getNameCount() == 0) {
                 throw new MyExceptions.WrongFormatException();
             }
@@ -626,7 +676,7 @@ public class Repository {
                 boolean found = false;
                 for (Tree tree : trees) {
                     if (tree.getName().equals(path.getName(0).toString())) {
-                        treeList.add(tree.add(path.subpath(1, path.getNameCount()), fullPath, hash));
+                        treeList.add(tree.add(path.subpath(1, path.getNameCount()), hash));
                         found = true;
                     } else {
                         treeList.add(tree);
@@ -634,7 +684,7 @@ public class Repository {
                 }
                 if (!found) {
                     treeList.add(new Tree(path.getName(0).toString())
-                            .add(path.subpath(1, path.getNameCount()), fullPath, hash));
+                            .add(path.subpath(1, path.getNameCount()), hash));
                 }
 
                 return new Tree(name, treeList, blobList);
@@ -642,7 +692,7 @@ public class Repository {
 
         }
 
-        private Blob findBlob(String name, String hash) throws IOException {
+        public  @Nullable Blob findBlob(@NotNull String name, @NotNull String hash) throws IOException {
             Stream<Path> pathStream = Files.walk(realObjects);
             return pathStream.reduce(null, (Blob blob, Path path) -> {
                 if (path.getFileName().toString().equals(hash)) {
@@ -665,7 +715,7 @@ public class Repository {
             });
         }
 
-        public List<PathWithSHA> constructOriginalPaths(Path path) {
+        public @NotNull List<PathWithSHA> constructOriginalPaths(@NotNull Path path) {
             List<PathWithSHA> pathsWithSHA = new ArrayList<>();
             for (Blob blob: blobs) {
                 pathsWithSHA.add(new PathWithSHA(path.resolve(blob.getName()), blob.getSHA()));
@@ -680,7 +730,7 @@ public class Repository {
             return pathsWithSHA;
         }
 
-        private Tree(String name, List<Tree> trees, List<Blob> blobs) throws IOException {
+        private Tree(@NotNull String name, @NotNull List<Tree> trees, @NotNull List<Blob> blobs) throws IOException {
             this.name = name;
             this.trees = trees;
             this.blobs = blobs;
@@ -693,7 +743,7 @@ public class Repository {
             write();
         }
 
-        private Tree(String name) throws IOException {
+        private Tree(@NotNull String name) throws IOException {
             this.name = name;
             content = new byte[0];
             trees = new ArrayList<>();
@@ -703,17 +753,17 @@ public class Repository {
         }
 
         @Override
-        public String getSHA() {
+        public @NotNull String getSHA() {
             return sha;
         }
 
         @Override
-        public String getType() {
+        public @NotNull String getType() {
             return VCSObject.TREE;
         }
 
         @Override
-        public byte[] getContent() {
+        public @NotNull byte[] getContent() {
             return content;
         }
 
@@ -732,22 +782,23 @@ public class Repository {
         private Path path;
         private String sha;
 
-        public PathWithSHA(Path path, String sha) {
+        public PathWithSHA(@NotNull Path path, @NotNull String sha) {
             this.path = path;
             this.sha = sha;
         }
 
-        public Path getPath() {
+        public @NotNull Path getPath() {
             return path;
         }
 
-        public String getSHA() {
+        public @NotNull String getSHA() {
             return sha;
         }
 
     }
 
-    public Blob readBlob(String name, Path path) throws MyExceptions.IsNotFileException, IOException {
+    private  @NotNull Blob readBlob(@NotNull String name, @NotNull Path path)
+            throws MyExceptions.IsNotFileException, IOException {
         if (!Files.isRegularFile(path)) {
             throw new MyExceptions.IsNotFileException();
         }
@@ -755,13 +806,13 @@ public class Repository {
         return new Blob(name, Files.readAllBytes(path));
     }
 
-    public class Blob extends VCSObject {
+    private class Blob extends VCSObject {
 
         private String sha;
         private byte[] content;
         private String name;
 
-        public Blob(String name, byte[] content) throws IOException {
+        public Blob(@NotNull String name, @NotNull byte[] content) throws IOException {
             this.content = content;
             this.name = name;
             updateSHA();
@@ -769,21 +820,21 @@ public class Repository {
         }
 
         @Override
-        public String getSHA() {
+        public @NotNull String getSHA() {
             return sha;
         }
 
         @Override
-        public String getType() {
+        public @NotNull String getType() {
             return VCSObject.BLOB;
         }
 
         @Override
-        public byte[] getContent() {
+        public @NotNull byte[] getContent() {
             return content;
         }
 
-        public String getName() {
+        public @NotNull String getName() {
             return name;
         }
 
@@ -798,7 +849,23 @@ public class Repository {
         }
     }
 
-    private String getSHAFromByteArray(byte[] content) {
+    private abstract class VCSObject {
+        
+        public static final String BLOB = "blob";
+        public static final String TREE = "tree";
+        public static final String COMMIT = "commit";
+        public static final String BRANCH = "branch";
+        public static final String TAG = "tag";
+
+        public abstract String getSHA();
+
+        public abstract String getType();
+
+        public abstract byte[] getContent();
+
+    }
+
+    private @NotNull String getSHAFromByteArray(@NotNull byte[] content) {
         return DigestUtils.sha1Hex(content);
     }
 

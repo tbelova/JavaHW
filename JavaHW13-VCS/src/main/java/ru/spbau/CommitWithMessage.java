@@ -1,30 +1,23 @@
 package ru.spbau;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
+/** Класс, хранящий пару из хеша коммита и его сообщения.*/
 public class CommitWithMessage {
+
     private String commit;
     private String message;
 
-    public static List<CommitWithMessage> commitsWithMessagesFromCommits(List<Repository.Commit> commits) {
-        List<CommitWithMessage> commitsWithMessages = new ArrayList<>();
-        for (Repository.Commit commit: commits) {
-            commitsWithMessages.add(new CommitWithMessage(commit));
-        }
-        return commitsWithMessages;
+    public CommitWithMessage(@NotNull String commit, @NotNull String message) {
+        this.commit = commit;
+        this.message = message;
     }
 
-    public CommitWithMessage(Repository.Commit commit) {
-        this.commit = commit.getSHA();
-        this.message = commit.getMessage();
-    }
-
-    public String getCommit() {
+    public @NotNull String getCommit() {
         return commit;
     }
 
-    public String getMessage() {
+    public @NotNull String getMessage() {
         return message;
     }
 }

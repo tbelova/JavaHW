@@ -37,7 +37,7 @@ public class Main {
             }
             try {
                 Repository.removeRepository(Paths.get(System.getProperty("user.dir")));
-            } catch (IOException e) {
+            } catch (IOException | MyExceptions.NotFoundException | MyExceptions.IsNotDirectoryException e) {
                 e.printStackTrace();
             }
         }
@@ -48,9 +48,7 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
             return;
-        }
-
-        if (repository == null) {
+        } catch (MyExceptions.NotFoundException e) {
             System.out.println("Can't load repository.");
             return;
         }

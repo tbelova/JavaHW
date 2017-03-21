@@ -1,5 +1,6 @@
 package ru.spbau;
 
+/** Класс, содержащий различные исключения, которые могут кидать методы класса Repository.*/
 public class MyExceptions {
 
     public static class IsNotDirectoryException extends Exception {}
