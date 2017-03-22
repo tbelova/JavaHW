@@ -120,7 +120,10 @@ public class Repository {
         boolean found = false;
         List<String> lines = Files.readAllLines(realIndex);
         String content = "";
-        String sha = getSHAFromByteArray(Files.readAllBytes(path));
+        String sha = null;
+        if (shouldAdd) {
+            sha = getSHAFromByteArray(Files.readAllBytes(path));
+        }
         for (String line: lines) {
             String[] strings = line.split(" ");
             if (strings.length != 2) {
@@ -153,15 +156,15 @@ public class Repository {
     /** Делает commit с заданным сообщением.*/
     public void commit(@NotNull String message) throws IOException, MyExceptions.WrongFormatException {
         List<String> lines = Files.readAllLines(realIndex);
-        List<PathWithSHA> pathsWithSHALine = new ArrayList<>();
+        List<PathWithSHA> pathsWithSHA = new ArrayList<>();
         for (String line: lines) {
             String[] strings = line.split(" ");
             if (strings.length != 2) {
                 throw new MyExceptions.WrongFormatException();
             }
-            pathsWithSHALine.add(new PathWithSHA(Paths.get(strings[0]), strings[1]));
+            pathsWithSHA.add(new PathWithSHA(Paths.get(strings[0]), strings[1]));
         }
-        Tree root = getTreeForCommit(pathsWithSHALine);
+        Tree root = getTreeForCommit(pathsWithSHA);
         ArrayList<Commit> parents = new ArrayList<>();
         parents.add(getHEADCommit());
         Commit commit = new Commit(message, root, parents);
@@ -331,7 +334,6 @@ public class Repository {
         }
         String[] stringList = lines.get(0).split(" ");
         if (stringList.length != 2) {
-            System.out.println(lines.get(0));
             throw new MyExceptions.WrongFormatException();
         }
         return stringList[0];
@@ -459,7 +461,7 @@ public class Repository {
         pathStream.forEach(this::readBranch);
     }
 
-    private void readBranch(Path path) {
+    private void readBranch(@NotNull Path path) {
         try {
             List<String> lines = Files.readAllLines(path);
             branches.add(new Branch(path.getFileName().toString(), readCommit(realObjects.resolve(lines.get(0)))));
@@ -646,9 +648,9 @@ public class Repository {
                     throw new MyExceptions.WrongFormatException();
                 }
                 if (stringList[0].equals(VCSObject.BLOB)) {
-                    blobs.add(readBlob(stringList[2], path.getParent().resolve(stringList[1])));
+                    blobs.add(readBlob(stringList[1], path.getParent().resolve(stringList[2])));
                 } else if (stringList[0].equals(VCSObject.TREE)) {
-                    trees.add(readTree(stringList[2], path.getParent().resolve(stringList[1])));
+                    trees.add(readTree(stringList[1], path.getParent().resolve(stringList[2])));
                 } else {
                     throw new MyExceptions.WrongFormatException();
                 }
@@ -737,6 +739,9 @@ public class Repository {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             for (Tree tree: trees) {
                 outputStream.write((VCSObject.TREE + " " + tree.getName() + " " + tree.getSHA() + "\n").getBytes());
+            }
+            for (Blob blob: blobs) {
+                outputStream.write((VCSObject.BLOB + " " + blob.getName() + " " + blob.getSHA() + "\n").getBytes());
             }
             content = outputStream.toByteArray();
             updateSHA();
@@ -850,7 +855,7 @@ public class Repository {
     }
 
     private abstract class VCSObject {
-        
+
         public static final String BLOB = "blob";
         public static final String TREE = "tree";
         public static final String COMMIT = "commit";

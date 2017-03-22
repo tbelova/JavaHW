@@ -3,6 +3,7 @@ package ru.spbau;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class Main {
 
@@ -136,7 +137,8 @@ public class Main {
             try {
                 repository.add(Paths.get(args[1]));
             } catch (MyExceptions.WrongFormatException e) {
-                System.out.println("Something went wrong.");
+                e.printStackTrace();
+                //System.out.println("Something went wrong.");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -172,7 +174,10 @@ public class Main {
             }
 
             try {
-                repository.log();
+                List<CommitWithMessage> log = repository.log();
+                for (CommitWithMessage commitWithMessage: log) {
+                    System.out.println(commitWithMessage.getCommit() + " " + commitWithMessage.getMessage());
+                }
             } catch (MyExceptions.WrongFormatException e) {
                 System.out.println("Something went wrong.");
             } catch (IOException e) {
