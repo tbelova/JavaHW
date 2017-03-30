@@ -4,8 +4,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
+/** Класс, отвечающий за работу с консолью.*/
 public class Main {
 
+    /**
+     * Принимает строку, задающую путь до дириктории/файла.
+     * Пишет значение check-суммы.
+     * Пишет, сколько времени работает каждый вариант подсчета check-суммы.
+     */
     public static void main(String[] args) {
         if (args.length != 1) {
             System.out.println("Wrong number of arguments.");

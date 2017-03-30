@@ -15,8 +15,10 @@ import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
+/** Вычисление check-суммы с использованием ForkJoinPool. */
 public class ForkJoinCheckSum {
 
+    /** Принимает путь до дириктории/файла, возвращает check-сумму.*/
     public static byte[] checkSum(Path path) throws FileNotFoundException {
         if (!Files.exists(path)) {
             throw new FileNotFoundException();
@@ -55,9 +57,11 @@ public class ForkJoinCheckSum {
                     return md.digest(bytes.getBytes());
 
                 } else {
-                    DigestInputStream inputStream = new DigestInputStream(new FileInputStream(path.toFile()), md);
+                    FileInputStream fileInputStream = new FileInputStream(path.toFile());
+                    DigestInputStream inputStream = new DigestInputStream(fileInputStream, md);
                     while (inputStream.read() != -1);
                     inputStream.close();
+                    fileInputStream.close();
                     return md.digest();
                 }
             } catch (NoSuchAlgorithmException | IOException e) {

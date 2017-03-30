@@ -11,8 +11,10 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/** Однопоточный вариант вычисления check-суммы.*/
 public class SingleThreadCheckSum {
 
+    /** Принимает путь до дириктории/файла, возвращает check-сумму.*/
     public static byte[] checkSum(Path path) throws FileNotFoundException {
         if (!Files.exists(path)) {
             throw new FileNotFoundException();
@@ -27,9 +29,11 @@ public class SingleThreadCheckSum {
                 }
                 return md.digest(bytes.getBytes());
             } else {
-                DigestInputStream inputStream = new DigestInputStream(new FileInputStream(path.toFile()), md);
+                FileInputStream fileInputStream = new FileInputStream(path.toFile());
+                DigestInputStream inputStream = new DigestInputStream(fileInputStream, md);
                 while (inputStream.read() != -1);
                 inputStream.close();
+                fileInputStream.close();
                 return md.digest();
             }
         } catch (NoSuchAlgorithmException | IOException e) {
