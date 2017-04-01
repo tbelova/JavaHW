@@ -33,8 +33,8 @@ public class RepositoryTest {
         Files.createFile(repositoryPath.resolve("dir1/file1"));
         Files.createFile(repositoryPath.resolve("dir1/file2"));
 
-        repository.add(repositoryPath.resolve("dir1/file1"));
-        repository.add(repositoryPath.resolve("dir1/file2"));
+        repository.add(Paths.get("dir1/file1"));
+        repository.add(Paths.get("dir1/file2"));
 
         assertTrue(Files.exists(repositoryPath.resolve("dir1/file1")));
         assertTrue(Files.exists(repositoryPath.resolve("dir1/file2")));
@@ -71,8 +71,8 @@ public class RepositoryTest {
         Files.createFile(repositoryPath.resolve("dir1/file1"));
         Files.createFile(repositoryPath.resolve("dir1/file2"));
 
-        repository.add(repositoryPath.resolve("dir1/file1"));
-        repository.add(repositoryPath.resolve("dir1/file2"));
+        repository.add(Paths.get("dir1/file1"));
+        repository.add(Paths.get("dir1/file2"));
 
         repository.commit("First commit!");
     }
@@ -88,7 +88,7 @@ public class RepositoryTest {
         Files.createDirectory(repositoryPath.resolve("dir1"));
         Files.createFile(repositoryPath.resolve("dir1/file1"));
 
-        repository.add(repositoryPath.resolve("dir1/file1"));
+        repository.add(Paths.get("dir1/file1"));
 
         assertTrue(Files.exists(repositoryPath.resolve("dir1/file1")));
 
@@ -163,7 +163,7 @@ public class RepositoryTest {
 
         Files.createFile(repositoryPath.resolve("dir1/file1"));
 
-        repository.add(repositoryPath.resolve("dir1/file1"));
+        repository.add(Paths.get("dir1/file1"));
         repository.commit("First commit");
 
         repository.checkout("master");
@@ -172,7 +172,7 @@ public class RepositoryTest {
         Files.createDirectory(repositoryPath.resolve("dir1"));
         Files.createFile(repositoryPath.resolve("dir1/file2"));
 
-        repository.add(repositoryPath.resolve("dir1/file2"));
+        repository.add(Paths.get("dir1/file2"));
         repository.commit("Second commit");
 
         repository.checkout("master");
@@ -191,7 +191,7 @@ public class RepositoryTest {
         Files.createDirectory(repositoryPath.resolve("dir2"));
         Files.createFile(repositoryPath.resolve("dir2/file1"));
 
-        repository.add(repositoryPath.resolve("dir2/file1"));
+        repository.add(Paths.get("dir2/file1"));
         repository.commit("Third commit");
         repository.merge("second");
 
