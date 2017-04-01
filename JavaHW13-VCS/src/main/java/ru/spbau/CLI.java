@@ -152,8 +152,7 @@ public class CLI {
         try {
             repository.add(Paths.get(args[1]));
         } catch (MyExceptions.WrongFormatException e) {
-            e.printStackTrace();
-            //System.out.println("Something went wrong.");
+            System.out.println("Something went wrong.");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -196,10 +195,10 @@ public class CLI {
         }
 
         try {
-            List<CommitWithMessage> log = repository.log();
-            for (CommitWithMessage commitWithMessage: log) {
-                System.out.println(commitWithMessage.getCommit() + "\n" + commitWithMessage.getMessage() +
-                        commitWithMessage.getAuthor() + "\n" + commitWithMessage.getDate() + "\n");
+            List<LogMessage> log = repository.log();
+            for (LogMessage logMessage : log) {
+                System.out.println(logMessage.getCommit() + "\n" + logMessage.getMessage() +
+                        logMessage.getAuthor() + "\n" + logMessage.getDate() + "\n");
             }
         } catch (MyExceptions.WrongFormatException e) {
             System.out.println("Something went wrong.");

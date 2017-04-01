@@ -108,11 +108,11 @@ public class RepositoryTest {
         Repository repository = Repository.getRepository(repositoryPath);
         repository.commit("First commit!");
         repository.commit("Second commit!");
-        List<CommitWithMessage> commitWithMessageList = repository.log();
-        assertEquals(3, commitWithMessageList.size());
-        assertEquals("Initial commit", commitWithMessageList.get(0).getMessage());
-        assertEquals("First commit!", commitWithMessageList.get(1).getMessage());
-        assertEquals("Second commit!", commitWithMessageList.get(2).getMessage());
+        List<LogMessage> logMessageList = repository.log();
+        assertEquals(3, logMessageList.size());
+        assertEquals("Initial commit", logMessageList.get(0).getMessage());
+        assertEquals("First commit!", logMessageList.get(1).getMessage());
+        assertEquals("Second commit!", logMessageList.get(2).getMessage());
     }
 
     @Test

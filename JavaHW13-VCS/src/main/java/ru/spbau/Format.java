@@ -14,13 +14,15 @@ import java.util.Date;
 
 public class Format {
 
+    private static String dateFormat = "MM/dd/yyyy HH:mm:ss";
+
     public static @NotNull Date readDate(@NotNull String date) throws ParseException {
-        DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        DateFormat df = new SimpleDateFormat(dateFormat);
         return df.parse(date);
     }
 
     public static @NotNull String writeDate(@NotNull Date date) {
-        DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        DateFormat df = new SimpleDateFormat(dateFormat);
         return df.format(date);
     }
 

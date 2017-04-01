@@ -214,12 +214,12 @@ public class Repository {
     }
 
     /** Возвращает отсортированный до дате создания список коммитов-предков текущего коммита.*/
-    public @NotNull List<CommitWithMessage> log() throws IOException, MyExceptions.WrongFormatException {
+    public @NotNull List<LogMessage> log() throws IOException, MyExceptions.WrongFormatException {
         Commit rootCommit = getHEADCommit();
         List<Commit> commits = rootCommit.log();
         commits = commits.stream().distinct().collect(Collectors.toList());
         Collections.sort(commits, Commit::compareTo);
-        return commitsWithMessagesFromCommits(commits);
+        return logMessagesFromCommits(commits);
     }
 
     /**
@@ -454,13 +454,13 @@ public class Repository {
         } catch (Exception e) {}
     }
 
-    private List<CommitWithMessage> commitsWithMessagesFromCommits(List<Commit> commits) {
-        List<CommitWithMessage> commitsWithMessages = new ArrayList<>();
+    private List<LogMessage> logMessagesFromCommits(List<Commit> commits) {
+        List<LogMessage> logMessages = new ArrayList<>();
         for (Commit commit: commits) {
-            commitsWithMessages.add(new CommitWithMessage(commit.getSHA(), commit.getMessage(),
+            logMessages.add(new LogMessage(commit.getSHA(), commit.getMessage(),
                     commit.getAuthor(), Format.writeDate(commit.getDate())));
         }
-        return commitsWithMessages;
+        return logMessages;
     }
 
 
