@@ -2,22 +2,39 @@ package ru.spbau;
 
 import org.jetbrains.annotations.NotNull;
 
-/** Класс, хранящий пару из хеша коммита и его сообщения.*/
+/** Класс, хранящий хеш коммита, его сообщение, автора и дату.*/
 public class CommitWithMessage {
 
-    private String commit;
-    private String message;
+    private final String commit;
+    private final String message;
+    private final String author;
+    private final String date;
 
-    public CommitWithMessage(@NotNull String commit, @NotNull String message) {
+    public CommitWithMessage(@NotNull String commit, @NotNull String message,
+                             @NotNull String author, @NotNull String date) {
         this.commit = commit;
         this.message = message;
+        this.author = author;
+        this.date = date;
     }
 
+    /** Возвращает хеш коммита.*/
     public @NotNull String getCommit() {
         return commit;
     }
 
+    /** Возвращает сообщение коммита.*/
     public @NotNull String getMessage() {
         return message;
+    }
+
+    /** Возвращает автора коммита.*/
+    public @NotNull String getAuthor() {
+        return author;
+    }
+
+    /** Возвращает дату коммита.*/
+    public @NotNull String getDate() {
+        return date;
     }
 }

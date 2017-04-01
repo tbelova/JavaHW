@@ -501,7 +501,8 @@ public class Repository {
     private List<CommitWithMessage> commitsWithMessagesFromCommits(List<Commit> commits) {
         List<CommitWithMessage> commitsWithMessages = new ArrayList<>();
         for (Repository.Commit commit: commits) {
-            commitsWithMessages.add(new CommitWithMessage(commit.getSHA(), commit.getMessage()));
+            commitsWithMessages.add(new CommitWithMessage(commit.getSHA(), commit.getMessage(),
+                    commit.getAuthor(), writeDate(commit.getDate())));
         }
         return commitsWithMessages;
     }
@@ -575,6 +576,10 @@ public class Repository {
 
         public @NotNull String getMessage() {
             return message;
+        }
+
+        public @NotNull String getAuthor() {
+            return author;
         }
 
         public @NotNull Tree getTree() {

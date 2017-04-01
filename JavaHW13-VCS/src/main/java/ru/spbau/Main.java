@@ -176,7 +176,8 @@ public class Main {
             try {
                 List<CommitWithMessage> log = repository.log();
                 for (CommitWithMessage commitWithMessage: log) {
-                    System.out.println(commitWithMessage.getCommit() + " " + commitWithMessage.getMessage());
+                    System.out.println(commitWithMessage.getCommit() + "\n" + commitWithMessage.getMessage() +
+                    commitWithMessage.getAuthor() + "\n" + commitWithMessage.getDate() + "\n");
                 }
             } catch (MyExceptions.WrongFormatException e) {
                 System.out.println("Something went wrong.");
@@ -185,6 +186,23 @@ public class Main {
             }
 
             return;
+        }
+
+        if (args[0].equals("merge")) {
+            if (args.length != 2) {
+                System.out.println("Wrong number of arguments.");
+                return;
+            }
+
+            try {
+                repository.merge(args[1]);
+            } catch (MyExceptions.NotFoundException e) {
+                System.out.println("No such branch.");
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (MyExceptions.WrongFormatException e) {
+                System.out.println("Something went wrong.");
+            }
         }
 
         System.out.println("Unknown command.");
