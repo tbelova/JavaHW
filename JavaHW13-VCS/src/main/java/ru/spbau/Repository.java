@@ -2,7 +2,6 @@ package ru.spbau;
 
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -105,7 +104,7 @@ public class Repository {
     }
 
     /** Принимает путь до файла, который был добавлен или удален, и изменяет информацию о нем в файле index.*/
-    public void add(@NotNull Path path) throws IOException, MyExceptions.WrongFormatException {
+    public void add(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem {
         path = repositoryPath.resolve(path);
         boolean shouldAdd =  Files.exists(path);
         boolean found = false;
@@ -118,7 +117,7 @@ public class Repository {
         for (String line: lines) {
             String[] strings = line.split(" ");
             if (strings.length != 2) {
-                throw new MyExceptions.WrongFormatException();
+                throw new MyExceptions.UnknownProblem();
             }
             if (strings[0].equals(path.toString())) {
                 if (!shouldAdd) continue;
@@ -140,13 +139,13 @@ public class Repository {
     }
 
     /** Делает commit с заданным сообщением.*/
-    public void commit(@NotNull String message) throws IOException, MyExceptions.WrongFormatException {
+    public void commit(@NotNull String message) throws IOException, MyExceptions.UnknownProblem {
         List<String> lines = Files.readAllLines(realIndex);
         List<PathWithSHA> pathsWithSHA = new ArrayList<>();
         for (String line: lines) {
             String[] strings = line.split(" ");
             if (strings.length != 2) {
-                throw new MyExceptions.WrongFormatException();
+                throw new MyExceptions.UnknownProblem();
             }
             pathsWithSHA.add(new PathWithSHA(Paths.get(strings[0]), strings[1]));
         }
@@ -166,7 +165,7 @@ public class Repository {
      * Бросает иключение, если ни ветки, ни коммита с таким названием не найдено.
      * */
     public void checkout(@NotNull String branchName) throws MyExceptions.NotFoundException, IOException {
-        Branch branchFound = findBranch(branchName);
+        Branch branchFound = Branch.find(branchName, branches);
         if (branchFound == null) {
             checkoutOnCommit(branchName);
         } else {
@@ -179,11 +178,11 @@ public class Repository {
      * Бросает исключение, если ветка с таким названием уже существует.
      */
     public void branch(@NotNull String newBranchName) throws MyExceptions.AlreadyExistsException,
-            IOException, MyExceptions.WrongFormatException {
+            IOException, MyExceptions.UnknownProblem, MyExceptions.WrongFormatException {
         if (newBranchName.contains(" ")) {
             throw new MyExceptions.WrongFormatException();
         }
-        Branch branch = findBranch(newBranchName);
+        Branch branch = Branch.find(newBranchName, branches);
         if (branch != null) {
             throw new MyExceptions.AlreadyExistsException();
         }
@@ -191,15 +190,16 @@ public class Repository {
     }
 
     /** Создает ветку с указанным названием и сразу переключается на нее.*/
-    public void createBranchAndCheckout(@NotNull String branchName) throws MyExceptions.WrongFormatException,
-            IOException, MyExceptions.AlreadyExistsException, MyExceptions.NotFoundException {
+    public void createBranchAndCheckout(@NotNull String branchName) throws MyExceptions.UnknownProblem,
+            IOException, MyExceptions.AlreadyExistsException, MyExceptions.NotFoundException,
+            MyExceptions.WrongFormatException {
         branch(branchName);
         checkout(branchName);
     }
 
     /** Удаляет ветку с указанным названием.*/
-    public void removeBranch(@NotNull String name) throws IOException, MyExceptions.WrongFormatException {
-        Branch branch = findBranch(name);
+    public void removeBranch(@NotNull String name) throws IOException, MyExceptions.UnknownProblem {
+        Branch branch = Branch.find(name, branches);
         if (branch != null) {
             if (!getTypeOfHEAD().equals(VCSObject.BRANCH) || getHeadBranch() != branch) {
                 branches.remove(branch);
@@ -209,12 +209,12 @@ public class Repository {
     }
 
     /** Возвращает название текущей ветки.*/
-    public @NotNull String getCurrentBranch() throws IOException, MyExceptions.WrongFormatException {
+    public @NotNull String getCurrentBranch() throws IOException, MyExceptions.UnknownProblem {
         return getHeadBranch().getName();
     }
 
     /** Возвращает отсортированный до дате создания список коммитов-предков текущего коммита.*/
-    public @NotNull List<LogMessage> log() throws IOException, MyExceptions.WrongFormatException {
+    public @NotNull List<LogMessage> log() throws IOException, MyExceptions.UnknownProblem {
         Commit rootCommit = getHEADCommit();
         List<Commit> commits = rootCommit.log();
         commits = commits.stream().distinct().collect(Collectors.toList());
@@ -227,9 +227,9 @@ public class Repository {
      * Бросает исключение, если указанной ветки не существует.
      * */
     public void merge(@NotNull String branchName) throws MyExceptions.NotFoundException,
-            IOException, MyExceptions.WrongFormatException {
+            IOException, MyExceptions.UnknownProblem {
         Branch curBranch = getHeadBranch();
-        Branch branch = findBranch(branchName);
+        Branch branch = Branch.find(branchName, branches);
         if (branch == null) {
             throw new MyExceptions.NotFoundException();
         }
@@ -264,14 +264,14 @@ public class Repository {
     }
 
     private void checkoutOnCommit(@NotNull String name) throws IOException, MyExceptions.NotFoundException {
-        Commit commit = findCommit(name);
+        Commit commit = Commit.find(name, realObjects);
         if (commit == null) {
             throw new MyExceptions.NotFoundException();
         }
         writeToHEAD(commit);
     }
 
-    private @NotNull Tree getTreeForCommit(@NotNull List<PathWithSHA> lines) throws IOException, MyExceptions.WrongFormatException {
+    private @NotNull Tree getTreeForCommit(@NotNull List<PathWithSHA> lines) throws IOException, MyExceptions.UnknownProblem {
         Tree root = getHEADTree();
         for (PathWithSHA line: lines) {
             root = root.add(repositoryPath.relativize(line.getPath()), line.getSHA());
@@ -280,57 +280,57 @@ public class Repository {
         return root;
     }
 
-    private @NotNull Commit getHeadCommit() throws IOException, MyExceptions.WrongFormatException {
+    private @NotNull Commit getHeadCommit() throws IOException, MyExceptions.UnknownProblem {
         List<String> lines = Files.readAllLines(realHEAD);
         if (lines.size() != 1) {
-            throw new MyExceptions.WrongFormatException();
+            throw new MyExceptions.UnknownProblem();
         }
         String[] stringList = lines.get(0).split(" ");
         if (stringList.length != 2) {
-            throw new MyExceptions.WrongFormatException();
+            throw new MyExceptions.UnknownProblem();
         }
         if (!stringList[0].equals(VCSObject.COMMIT)) {
-            throw new MyExceptions.WrongFormatException();
+            throw new MyExceptions.UnknownProblem();
         }
         Commit commit = Commit.read(realObjects.resolve(stringList[1]), realObjects);
         if (commit == null) {
-            throw new MyExceptions.WrongFormatException();
+            throw new MyExceptions.UnknownProblem();
         }
         return commit;
     }
 
-    private @NotNull Branch getHeadBranch() throws IOException, MyExceptions.WrongFormatException {
+    private @NotNull Branch getHeadBranch() throws IOException, MyExceptions.UnknownProblem {
         List<String> lines = Files.readAllLines(realHEAD);
         if (lines.size() != 1) {
-            throw new MyExceptions.WrongFormatException();
+            throw new MyExceptions.UnknownProblem();
         }
         String[] stringList = lines.get(0).split(" ");
         if (stringList.length != 2) {
-            throw new MyExceptions.WrongFormatException();
+            throw new MyExceptions.UnknownProblem();
         }
         if (!stringList[0].equals(VCSObject.BRANCH)) {
-            throw new MyExceptions.WrongFormatException();
+            throw new MyExceptions.UnknownProblem();
         }
-        Branch branch = findBranch(stringList[1]);
+        Branch branch = Branch.find(stringList[1], branches);
         if (branch == null) {
-            throw new MyExceptions.WrongFormatException();
+            throw new MyExceptions.UnknownProblem();
         }
         return branch;
     }
 
-    private @NotNull String getTypeOfHEAD() throws IOException, MyExceptions.WrongFormatException {
+    private @NotNull String getTypeOfHEAD() throws IOException, MyExceptions.UnknownProblem {
         List<String> lines = Files.readAllLines(realHEAD);
         if (lines.size() != 1) {
-            throw new MyExceptions.WrongFormatException();
+            throw new MyExceptions.UnknownProblem();
         }
         String[] stringList = lines.get(0).split(" ");
         if (stringList.length != 2) {
-            throw new MyExceptions.WrongFormatException();
+            throw new MyExceptions.UnknownProblem();
         }
         return stringList[0];
     }
 
-    private @NotNull Commit getHEADCommit() throws IOException, MyExceptions.WrongFormatException {
+    private @NotNull Commit getHEADCommit() throws IOException, MyExceptions.UnknownProblem {
         if (getTypeOfHEAD().equals(VCSObject.BRANCH)) {
             return getHeadBranch().getCommit();
         } else {
@@ -338,35 +338,8 @@ public class Repository {
         }
     }
 
-    private @NotNull Tree getHEADTree() throws IOException, MyExceptions.WrongFormatException {
+    private @NotNull Tree getHEADTree() throws IOException, MyExceptions.UnknownProblem {
         return getHEADCommit().getTree();
-    }
-
-    private @Nullable Branch findBranch(@NotNull String name) {
-        Branch branchFound = null;
-        for (Branch branch: branches) {
-            if (branch.getName().equals(name)) {
-                branchFound = branch;
-            }
-        }
-        return branchFound;
-    }
-
-    private @Nullable Commit findCommit(@NotNull String name) throws IOException {
-        Stream<Path> pathStream = Files.walk(realObjects);
-        return pathStream.reduce(null, (Commit commit, Path path) -> {
-            if (path.getFileName().toString().equals(name)) {
-                return Commit.read(path, realObjects);
-            } else {
-                return commit;
-            }
-        }, (Commit commit1, Commit commit2) -> {
-            if (commit1 == null) {
-                return commit2;
-            } else {
-                return commit1;
-            }
-        });
     }
 
     private void initialCommit() throws IOException {

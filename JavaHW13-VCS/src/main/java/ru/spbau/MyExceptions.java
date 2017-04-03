@@ -7,11 +7,12 @@ public class MyExceptions {
 
     public static class IsNotFileException extends Exception {}
 
-    public static class WrongFormatException extends Exception {}
+    public static class UnknownProblem extends Exception {}
 
     public static class NotFoundException extends Exception {}
 
     public static class AlreadyExistsException extends Exception {}
 
+    public static class WrongFormatException extends Exception {}
 
 }

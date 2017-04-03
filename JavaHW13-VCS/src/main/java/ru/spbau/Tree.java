@@ -1,7 +1,6 @@
 package ru.spbau;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -9,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class Tree extends VCSObject {
 
@@ -20,7 +18,7 @@ public class Tree extends VCSObject {
 
     public static @NotNull Tree read(@NotNull String name, @NotNull Path path, @NotNull Path objects)
             throws MyExceptions.IsNotFileException,
-            IOException, MyExceptions.WrongFormatException {
+            IOException, MyExceptions.UnknownProblem {
         if (!Files.isRegularFile(path)) {
             throw new MyExceptions.IsNotFileException();
         }
@@ -28,7 +26,7 @@ public class Tree extends VCSObject {
     }
 
     public Tree(@NotNull String name, @NotNull Path path, @NotNull Path objects) throws IOException,
-            MyExceptions.WrongFormatException, MyExceptions.IsNotFileException {
+            MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
         this.objects = objects;
 
         content = Files.readAllBytes(path);
@@ -41,14 +39,14 @@ public class Tree extends VCSObject {
         for (String s : lines) {
             String[] stringList = s.split(" ");
             if (stringList.length != 3) {
-                throw new MyExceptions.WrongFormatException();
+                throw new MyExceptions.UnknownProblem();
             }
             if (stringList[0].equals(VCSObject.BLOB)) {
                 blobs.add(Blob.read(stringList[1], path.getParent().resolve(stringList[2]), objects));
             } else if (stringList[0].equals(VCSObject.TREE)) {
                 trees.add(read(stringList[1], path.getParent().resolve(stringList[2]), objects));
             } else {
-                throw new MyExceptions.WrongFormatException();
+                throw new MyExceptions.UnknownProblem();
             }
         }
     }
@@ -58,14 +56,14 @@ public class Tree extends VCSObject {
     }
 
     public @NotNull Tree add(@NotNull Path path, @NotNull String hash)
-            throws IOException, MyExceptions.WrongFormatException {
+            throws IOException, MyExceptions.UnknownProblem {
         if (path.getNameCount() == 0) {
-            throw new MyExceptions.WrongFormatException();
+            throw new MyExceptions.UnknownProblem();
         }
         if (path.getNameCount() == 1) {
             List<Blob> blobList = new ArrayList<>(blobs);
             List<Tree> treeList = new ArrayList<>(trees);
-            blobList.add(findBlob(path.getName(0).toString(), hash));
+            blobList.add(Blob.find(path.getName(0).toString(), hash, objects));
             return new Tree(name, treeList, blobList, objects);
         } else {
             List<Tree> treeList = new ArrayList<>();
@@ -88,29 +86,6 @@ public class Tree extends VCSObject {
             return new Tree(name, treeList, blobList, objects);
         }
 
-    }
-
-    public  @Nullable Blob findBlob(@NotNull String name, @NotNull String hash) throws IOException {
-        Stream<Path> pathStream = Files.walk(objects);
-        return pathStream.reduce(null, (Blob blob, Path path) -> {
-            if (path.getFileName().toString().equals(hash)) {
-                Blob resultBlob = null;
-                try {
-                    resultBlob = Blob.read(name, path, objects);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                return resultBlob;
-            } else {
-                return blob;
-            }
-        }, (Blob blob1, Blob blob2) -> {
-            if (blob1 == null) {
-                return blob2;
-            } else {
-                return blob1;
-            }
-        });
     }
 
     public @NotNull List<PathWithSHA> constructOriginalPaths(@NotNull Path path) {

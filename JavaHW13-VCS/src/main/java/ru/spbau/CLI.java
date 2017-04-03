@@ -66,7 +66,7 @@ public class CLI {
                 System.out.println(repository.getCurrentBranch());
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (MyExceptions.WrongFormatException e) {
+            } catch (MyExceptions.UnknownProblem e) {
                 System.out.println("Something went wrong.");
             }
             return true;
@@ -79,10 +79,12 @@ public class CLI {
             repository.branch(args[1]);
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (MyExceptions.WrongFormatException e) {
+        } catch (MyExceptions.UnknownProblem e) {
             System.out.println("Something went wrong.");
         } catch (MyExceptions.AlreadyExistsException e) {
             System.out.println("This branch already exists.");
+        } catch (MyExceptions.WrongFormatException e) {
+            System.out.println("Wrong format. Maybe you use spaces in the branch name.");
         }
 
         return true;
@@ -129,7 +131,7 @@ public class CLI {
             repository.removeBranch(args[1]);
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (MyExceptions.WrongFormatException e) {
+        } catch (MyExceptions.UnknownProblem e) {
             System.out.println("Something went wrong.");
         }
 
@@ -151,7 +153,7 @@ public class CLI {
 
         try {
             repository.add(Paths.get(args[1]));
-        } catch (MyExceptions.WrongFormatException e) {
+        } catch (MyExceptions.UnknownProblem e) {
             System.out.println("Something went wrong.");
         } catch (IOException e) {
             e.printStackTrace();
@@ -176,7 +178,7 @@ public class CLI {
 
         try {
             repository.commit(args[1]);
-        } catch (MyExceptions.WrongFormatException e) {
+        } catch (MyExceptions.UnknownProblem e) {
             System.out.println("Something went wrong.");
         } catch (IOException e) {
             e.printStackTrace();
@@ -200,7 +202,7 @@ public class CLI {
                 System.out.println(logMessage.getCommit() + "\n" + logMessage.getMessage() +
                         logMessage.getAuthor() + "\n" + logMessage.getDate() + "\n");
             }
-        } catch (MyExceptions.WrongFormatException e) {
+        } catch (MyExceptions.UnknownProblem e) {
             System.out.println("Something went wrong.");
         } catch (IOException e) {
             e.printStackTrace();
@@ -224,7 +226,7 @@ public class CLI {
             System.out.println("No such branch.");
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (MyExceptions.WrongFormatException e) {
+        } catch (MyExceptions.UnknownProblem e) {
             System.out.println("Something went wrong.");
         }
 

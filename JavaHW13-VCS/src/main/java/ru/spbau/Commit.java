@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Commit extends VCSObject implements Comparable<Commit> {
 
@@ -17,6 +18,23 @@ public class Commit extends VCSObject implements Comparable<Commit> {
     private List<Commit> parentCommits;
     private Date date;
     private String author;
+
+    public static  @Nullable Commit find(@NotNull String hash, @NotNull Path objects) throws IOException {
+        Stream<Path> pathStream = Files.walk(objects);
+        return pathStream.reduce(null, (Commit commit, Path path) -> {
+            if (path.getFileName().toString().equals(hash)) {
+                return Commit.read(path, objects);
+            } else {
+                return commit;
+            }
+        }, (Commit commit1, Commit commit2) -> {
+            if (commit1 == null) {
+                return commit2;
+            } else {
+                return commit1;
+            }
+        });
+    }
 
     public static @Nullable Commit read(@NotNull Path path, Path objects) {
         try {
@@ -96,6 +114,7 @@ public class Commit extends VCSObject implements Comparable<Commit> {
     public int compareTo(@NotNull Commit commit) {
         return date.compareTo(commit.getDate());
     }
+
 }
 
 
