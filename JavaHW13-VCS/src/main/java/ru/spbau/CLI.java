@@ -85,6 +85,8 @@ public class CLI {
             System.out.println("This branch already exists.");
         } catch (MyExceptions.WrongFormatException e) {
             System.out.println("Wrong format. Maybe you use spaces in the branch name.");
+        } catch (MyExceptions.IsNotFileException e) {
+            e.printStackTrace();
         }
 
         return true;
@@ -182,6 +184,8 @@ public class CLI {
             System.out.println("Something went wrong.");
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (MyExceptions.IsNotFileException e) {
+            e.printStackTrace();
         }
 
         return true;
@@ -206,6 +210,8 @@ public class CLI {
             System.out.println("Something went wrong.");
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (MyExceptions.IsNotFileException e) {
+            e.printStackTrace();
         }
 
         return true;
@@ -228,6 +234,8 @@ public class CLI {
             e.printStackTrace();
         } catch (MyExceptions.UnknownProblem e) {
             System.out.println("Something went wrong.");
+        } catch (MyExceptions.IsNotFileException e) {
+            e.printStackTrace();
         }
 
         return true;

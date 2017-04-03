@@ -9,14 +9,15 @@ import java.util.List;
 
 public class Branch {
 
+    private final Repository repository;
+
     private String name;
     private Commit commit;
-    private Path branches;
 
-    public Branch(@NotNull String name, @NotNull Commit commit, @NotNull Path branches) throws IOException {
+    public Branch(@NotNull String name, @NotNull Commit commit, @NotNull Repository repository) throws IOException {
         this.name = name;
         this.commit = commit;
-        this.branches = branches;
+        this.repository = repository;
         write();
     }
 
@@ -44,7 +45,21 @@ public class Branch {
     }
 
     private void write() throws IOException {
-        Format.writeTo(branches.resolve(name), commit.getSHA());
+        Format.writeTo(repository.folders.realBranchesFolder.resolve(name), commit.getSHA());
     }
+
+    public Branch(@NotNull Path path, @NotNull Repository repository)
+            throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+        List<String> lines = Format.readLines(path);
+        Commit commit = new Commit(repository.folders.realObjectsFolder.resolve(lines.get(0)), repository);
+        if (commit != null) {
+            this.name = path.getFileName().toString();
+            this.commit = commit;
+            this.repository = repository;
+        } else {
+            throw new MyExceptions.UnknownProblem();
+        }
+    }
+
 
 }

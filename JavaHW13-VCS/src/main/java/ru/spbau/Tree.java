@@ -16,35 +16,36 @@ public class Tree extends VCSObject {
     private List<Tree> trees;
     private List<Blob> blobs;
 
-    public static @NotNull Tree read(@NotNull String name, @NotNull Path path, @NotNull Path objects)
+    public static @NotNull Tree read(@NotNull String name, @NotNull Path path, @NotNull Repository repository)
             throws MyExceptions.IsNotFileException,
             IOException, MyExceptions.UnknownProblem {
         if (!Files.isRegularFile(path)) {
             throw new MyExceptions.IsNotFileException();
         }
-        return new Tree(name, path, objects);
+        return new Tree(name, path, repository);
     }
 
-    public Tree(@NotNull String name, @NotNull Path path, @NotNull Path objects) throws IOException,
+    public Tree(@NotNull String name, @NotNull Path path, @NotNull Repository repository) throws IOException,
             MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
-        this.objects = objects;
+        this.repository = repository;
 
-        content = Files.readAllBytes(path);
+        content = Format.readByteContent(path);
         trees = new ArrayList<>();
         blobs = new ArrayList<>();
         this.name = name;
         updateSHA();
 
-        List<String> lines = Files.readAllLines(path);
+        List<String> lines = Format.readLines(path);
         for (String s : lines) {
             String[] stringList = s.split(" ");
             if (stringList.length != 3) {
+
                 throw new MyExceptions.UnknownProblem();
             }
             if (stringList[0].equals(VCSObject.BLOB)) {
-                blobs.add(Blob.read(stringList[1], path.getParent().resolve(stringList[2]), objects));
+                blobs.add(new Blob(stringList[1], path.getParent().resolve(stringList[2]), repository));
             } else if (stringList[0].equals(VCSObject.TREE)) {
-                trees.add(read(stringList[1], path.getParent().resolve(stringList[2]), objects));
+                trees.add(read(stringList[1], path.getParent().resolve(stringList[2]), repository));
             } else {
                 throw new MyExceptions.UnknownProblem();
             }
@@ -63,8 +64,8 @@ public class Tree extends VCSObject {
         if (path.getNameCount() == 1) {
             List<Blob> blobList = new ArrayList<>(blobs);
             List<Tree> treeList = new ArrayList<>(trees);
-            blobList.add(Blob.find(path.getName(0).toString(), hash, objects));
-            return new Tree(name, treeList, blobList, objects);
+            blobList.add(repository.find(path.getName(0).toString(), hash));
+            return new Tree(name, treeList, blobList, repository);
         } else {
             List<Tree> treeList = new ArrayList<>();
             List<Blob> blobList = new ArrayList<>(blobs);
@@ -79,11 +80,11 @@ public class Tree extends VCSObject {
                 }
             }
             if (!found) {
-                treeList.add(new Tree(path.getName(0).toString(), objects)
+                treeList.add(new Tree(path.getName(0).toString(), repository)
                         .add(path.subpath(1, path.getNameCount()), hash));
             }
 
-            return new Tree(name, treeList, blobList, objects);
+            return new Tree(name, treeList, blobList, repository);
         }
 
     }
@@ -103,12 +104,12 @@ public class Tree extends VCSObject {
         return pathsWithSHA;
     }
 
-    private Tree(@NotNull String name, @NotNull List<Tree> trees, @NotNull List<Blob> blobs, @NotNull Path objects)
+    private Tree(@NotNull String name, @NotNull List<Tree> trees, @NotNull List<Blob> blobs, @NotNull Repository repository)
             throws IOException {
         this.name = name;
         this.trees = trees;
         this.blobs = blobs;
-        this.objects = objects;
+        this.repository = repository;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         for (Tree tree: trees) {
             outputStream.write((VCSObject.TREE + " " + tree.getName() + " " + tree.getSHA() + "\n").getBytes());
@@ -121,9 +122,9 @@ public class Tree extends VCSObject {
         write();
     }
 
-    public Tree(@NotNull String name, @NotNull Path objects) throws IOException {
+    public Tree(@NotNull String name, @NotNull Repository repository) throws IOException {
         this.name = name;
-        this.objects = objects;
+        this.repository = repository;
         content = new byte[0];
         trees = new ArrayList<>();
         blobs = new ArrayList<>();

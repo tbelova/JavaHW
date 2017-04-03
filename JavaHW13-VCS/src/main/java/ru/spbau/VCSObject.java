@@ -3,7 +3,6 @@ package ru.spbau;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.Path;
 
 public abstract class VCSObject {
 
@@ -13,7 +12,7 @@ public abstract class VCSObject {
     public static final String BRANCH = "branch";
     public static final String TAG = "tag";
 
-    protected Path objects;
+    protected Repository repository;
     protected byte[] content;
     protected String sha;
 
@@ -28,7 +27,7 @@ public abstract class VCSObject {
     public abstract @NotNull String getType();
 
     protected void write() throws IOException {
-        Format.writeTo(objects.resolve(sha), content);
+        Format.writeTo(repository.folders.realObjectsFolder.resolve(sha), content);
     }
 
 

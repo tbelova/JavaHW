@@ -1,15 +1,12 @@
 package ru.spbau;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class Commit extends VCSObject implements Comparable<Commit> {
 
@@ -19,58 +16,38 @@ public class Commit extends VCSObject implements Comparable<Commit> {
     private Date date;
     private String author;
 
-    public static  @Nullable Commit find(@NotNull String hash, @NotNull Path objects) throws IOException {
-        Stream<Path> pathStream = Files.walk(objects);
-        return pathStream.reduce(null, (Commit commit, Path path) -> {
-            if (path.getFileName().toString().equals(hash)) {
-                return Commit.read(path, objects);
-            } else {
-                return commit;
-            }
-        }, (Commit commit1, Commit commit2) -> {
-            if (commit1 == null) {
-                return commit2;
-            } else {
-                return commit1;
-            }
-        });
-    }
-
-    public static @Nullable Commit read(@NotNull Path path, Path objects) {
-        try {
-            List<String> lines = Files.readAllLines(path);
-            List<Commit> parents = new ArrayList<>();
-            for (int i = 4; i < lines.size(); i++) {
-                parents.add(read(objects.resolve(lines.get(i)), objects));
-            }
-            return new Commit(lines.get(0),
-                    Tree.read("root", objects.resolve(lines.get(1)), objects),
-                    Format.readDate(lines.get(2)), lines.get(3), parents, objects);
-        } catch (Exception e) {
-            return null;
+    public Commit(@NotNull Path path, @NotNull Repository repository)
+            throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+        List<String> lines = Format.readLines(path);
+        List<Commit> parents = new ArrayList<>();
+        for (int i = 4; i < lines.size(); i++) {
+            parents.add(new Commit(repository.folders.realObjectsFolder.resolve(lines.get(i)), repository));
         }
-    }
-
-    public Commit(@NotNull String message, @NotNull Tree tree, @NotNull Date date,
-                  @NotNull String author, @NotNull List<Commit> parents, Path objects) throws IOException {
-        this.message = message;
-        this.tree = tree;
-        this.date = date;
-        this.author = author;
-        this.objects = objects;
-        parentCommits = new ArrayList<>(parents);
-        String contentString = message + "\n" + tree.getSHA() + "\n" + Format.writeDate(date) + "\n" + author;
-        for (Commit parentCommit: parentCommits) {
-            contentString += "\n" + parentCommit.getSHA();
-        }
-        content = contentString.getBytes();
+        this.message = lines.get(0);
+        this.tree = Tree.read("root", repository.folders.realObjectsFolder.resolve(lines.get(1)), repository);
+        this.date = Format.readDate(lines.get(2));
+        this.author = lines.get(3);
+        this.parentCommits = parents;
+        this.repository =repository;
         updateSHA();
         write();
     }
 
-    public Commit(@NotNull String message, @NotNull Tree tree, @NotNull List<Commit> parents, Path objects)
+    public Commit(@NotNull String message, @NotNull Tree tree, @NotNull Date date,
+                  @NotNull String author, @NotNull List<Commit> parents, @NotNull Repository repository) throws IOException {
+        this.message = message;
+        this.tree = tree;
+        this.date = date;
+        this.author = author;
+        this.repository = repository;
+        parentCommits = new ArrayList<>(parents);
+        updateSHA();
+        write();
+    }
+
+    public Commit(@NotNull String message, @NotNull Tree tree, @NotNull List<Commit> parents, @NotNull Repository repository)
             throws IOException {
-        this(message, tree, new Date(), System.getProperty("user.name"), parents, objects);
+        this(message, tree, new Date(), System.getProperty("user.name"), parents, repository);
     }
 
     public @NotNull List<Commit> log() {
@@ -107,6 +84,11 @@ public class Commit extends VCSObject implements Comparable<Commit> {
     }
 
     private void updateSHA() {
+        String contentString = message + "\n" + tree.getSHA() + "\n" + Format.writeDate(date) + "\n" + author;
+        for (Commit parentCommit: parentCommits) {
+            contentString += "\n" + parentCommit.getSHA();
+        }
+        content = contentString.getBytes();
         sha = Format.getSHAFromByteArray(content);
     }
 

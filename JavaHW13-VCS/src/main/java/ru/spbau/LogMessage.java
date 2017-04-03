@@ -2,6 +2,9 @@ package ru.spbau;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /** Класс, хранящий хеш коммита, его сообщение, автора и дату.*/
 public class LogMessage {
 
@@ -16,6 +19,15 @@ public class LogMessage {
         this.message = message;
         this.author = author;
         this.date = date;
+    }
+
+    public static List<LogMessage> logMessagesFromCommits(List<Commit> commits) {
+        List<LogMessage> logMessages = new ArrayList<>();
+        for (Commit commit: commits) {
+            logMessages.add(new LogMessage(commit.getSHA(), commit.getMessage(),
+                    commit.getAuthor(), Format.writeDate(commit.getDate())));
+        }
+        return logMessages;
     }
 
     /** Возвращает хеш коммита.*/
