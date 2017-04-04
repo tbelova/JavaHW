@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +26,7 @@ public class Repository {
      * Бросает исключение, если такой папки не существует или в ней уже создан репозиторий.
      */
     static public @NotNull Repository initRepository(@NotNull Path path) throws IOException,
-            MyExceptions.IsNotDirectoryException, MyExceptions.AlreadyExistsException, MyExceptions.UnknownProblem {
+            MyExceptions.IsNotDirectoryException, MyExceptions.AlreadyExistsException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
 
         FileSystemWorker.createRepository(new VCSFolders(path));
 
@@ -98,16 +97,7 @@ public class Repository {
 
     /** Делает commit с заданным сообщением.*/
     public void commit(@NotNull String message) throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
-        List<String> lines = FileSystemWorker.readLines(folders.realIndexFile);
-        List<PathWithSHA> pathsWithSHA = new ArrayList<>();
-        for (String line: lines) {
-            String[] strings = line.split(" ");
-            if (strings.length != 2) {
-                throw new MyExceptions.UnknownProblem();
-            }
-            pathsWithSHA.add(new PathWithSHA(Paths.get(strings[0]), strings[1]));
-        }
-        Tree root = getTreeForCommit(pathsWithSHA);
+        Tree root = getTreeForCommit(index.getPathsWithSHA());
         ArrayList<Commit> parents = new ArrayList<>();
         parents.add(head.getCommitAnyway());
         Commit commit = new Commit(message, root, parents, this);
@@ -214,6 +204,32 @@ public class Repository {
         updateIndex(commit);
     }
 
+    public List<File> status() throws IOException, MyExceptions.UnknownProblem {
+        return index.getAllFiles();
+    }
+
+    public void reset(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+        path = folders.repositoryPath.resolve(path);
+        String sha = index.getSHA(path);
+        if (sha == null) {
+            throw new MyExceptions.UnknownProblem();
+        }
+        addFileToUserDirectory(path, sha);
+    }
+
+    public void rm(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem {
+        path = folders.repositoryPath.resolve(path);
+        FileSystemWorker.delete(path);
+        add(path);
+    }
+
+    public void clean() throws IOException, MyExceptions.UnknownProblem {
+        List<File> untrackedFiles = index.getUntrackedFiles();
+        for (File file: untrackedFiles) {
+            FileSystemWorker.delete(file.getPath());
+        }
+    }
+
     private Repository(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem {
         folders = new VCSFolders(path);
         head = new Head(this);
@@ -239,29 +255,29 @@ public class Repository {
         return root;
     }
 
-    private void initialCommit() throws IOException {
+    private void initialCommit() throws IOException, MyExceptions.IsNotFileException {
         Branch branch = new Branch("master", new Commit("Initial commit",
                 new Tree("root", this), new ArrayList<>(), this), this);
         branches.add(branch);
         writeToHEAD(branch);
     }
 
-    private void writeToHEAD(@NotNull Branch branch) throws IOException {
+    private void writeToHEAD(@NotNull Branch branch) throws IOException, MyExceptions.IsNotFileException {
         head.write(branch);
         updateIndex(branch.getCommit());
     }
 
-    private void writeToHEAD(@NotNull Commit commit) throws IOException {
+    private void writeToHEAD(@NotNull Commit commit) throws IOException, MyExceptions.IsNotFileException {
         head.write(commit);
         updateIndex(commit);
     }
 
-    private void updateIndex(@NotNull Commit commit) throws IOException {
+    private void updateIndex(@NotNull Commit commit) throws IOException, MyExceptions.IsNotFileException {
         index.update(commit);
         updateUserDirectory(commit);
     }
 
-    private void updateUserDirectory(@NotNull Commit commit) throws IOException {
+    private void updateUserDirectory(@NotNull Commit commit) throws IOException, MyExceptions.IsNotFileException {
 
         List<PathWithSHA> pathsWithSHA = commit.getPathWithSHAList();
         List<Path> paths = FileSystemWorker.walk(folders.repositoryPath);
@@ -278,16 +294,10 @@ public class Repository {
 
     }
 
-    private void addFileToUserDirectory(@NotNull Path path, @NotNull String name) throws IOException {
+    private void addFileToUserDirectory(@NotNull Path path, @NotNull String sha) throws IOException, MyExceptions.IsNotFileException {
 
         FileSystemWorker.createFile(path);
-        List<Path> paths = FileSystemWorker.walk(folders.repositoryPath);
-
-        for (Path vcsobject: paths) {
-            if (vcsobject.getFileName().toString().equals(name)) {
-                FileSystemWorker.writeTo(path, FileSystemWorker.readByteContent(vcsobject));
-            }
-        }
+        FileSystemWorker.writeTo(path, findBlob(path.getFileName().toString(), sha).getContent());
 
     }
 

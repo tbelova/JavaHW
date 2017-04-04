@@ -8,13 +8,16 @@ import java.util.List;
 public class CLI {
 
     public static boolean tryInit(String[] args, Path path) {
+
         if (!args[0].equals("init")) {
             return false;
         }
+
         if (args.length > 1) {
             System.out.println("Too many arguments.");
             return true;
         }
+
         try {
             Repository.initRepository(path);
         } catch (IOException | MyExceptions.IsNotDirectoryException e) {
@@ -23,15 +26,19 @@ public class CLI {
             System.out.println("Repository already exists.");
         } catch (MyExceptions.UnknownProblem unknownProblem) {
             unknownProblem.printStackTrace();
+        } catch (MyExceptions.IsNotFileException e) {
+            e.printStackTrace();
         }
 
         return true;
     }
 
     public static boolean tryRemove(String[] args, Path path) {
+
         if (!args[0].equals("remove")) {
             return false;
         }
+
         if (args.length > 1) {
             System.out.println("Too many arguments.");
             return true;
@@ -46,7 +53,9 @@ public class CLI {
     }
 
     public static Repository getRepository(Path path) {
+
         Repository repository;
+
         try {
             repository = Repository.getRepository(path);
         } catch (IOException e) {
@@ -64,9 +73,11 @@ public class CLI {
     }
 
     public static boolean tryBranch(String[] args, Repository repository) {
+
         if (!args[0].equals("branch")) {
             return false;
         }
+
         if (args.length == 1) {
             try {
                 System.out.println(repository.getCurrentBranch());
@@ -77,10 +88,12 @@ public class CLI {
             }
             return true;
         }
+
         if (args.length > 2) {
             System.out.println("Too many arguments.");
             return true;
         }
+
         try {
             repository.branch(args[1]);
         } catch (IOException e) {
@@ -99,13 +112,16 @@ public class CLI {
     }
 
     public static boolean tryCheckout(String[] args, Repository repository) {
+
         if (!args[0].equals("checkout")) {
             return false;
         }
+
         if (args.length == 1) {
             System.out.println("Too few arguments.");
             return true;
         }
+
         if (args.length > 2) {
             System.out.println("Too many arguments.");
             return true;
@@ -127,13 +143,16 @@ public class CLI {
     }
 
     public static boolean tryDeleteBranch(String[] args, Repository repository) {
+
         if (!args[0].equals("branch_rm")) {
             return false;
         }
+
         if (args.length == 1) {
             System.out.println("Too few arguments.");
             return true;
         }
+
         if (args.length > 2) {
             System.out.println("Too many arguments.");
             return true;
@@ -151,13 +170,16 @@ public class CLI {
     }
 
     public static boolean tryAdd(String[] args, Repository repository) {
+
         if (!args[0].equals("add")) {
             return false;
         }
+
         if (args.length == 1) {
             System.out.println("Too few arguments.");
             return true;
         }
+
         if (args.length > 2) {
             System.out.println("Too many arguments.");
             return true;
@@ -176,13 +198,16 @@ public class CLI {
 
 
     public static boolean tryCommit(String[] args, Repository repository) {
+
         if (!args[0].equals("commit")) {
             return false;
         }
+
         if (args.length == 1) {
             System.out.println("Too few arguments.");
             return true;
         }
+
         if (args.length > 2) {
             System.out.println("Too many arguments.");
             return true;
@@ -202,9 +227,11 @@ public class CLI {
     }
 
     public static boolean tryLog(String[] args, Repository repository) {
+
         if (!args[0].equals("log")) {
             return false;
         }
+
         if (args.length > 1) {
             System.out.println("Too many arguments.");
             return true;
@@ -228,9 +255,11 @@ public class CLI {
     }
 
     public static boolean tryMerge(String[] args, Repository repository) {
+
         if (!args[0].equals("merge")) {
             return false;
         }
+
         if (args.length != 2) {
             System.out.println("Wrong number of arguments.");
             return true;
