@@ -29,13 +29,13 @@ public class Tree extends VCSObject {
             MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
         this.repository = repository;
 
-        content = Format.readByteContent(path);
+        content = FileSystemWorker.readByteContent(path);
         trees = new ArrayList<>();
         blobs = new ArrayList<>();
         this.name = name;
         updateSHA();
 
-        List<String> lines = Format.readLines(path);
+        List<String> lines = FileSystemWorker.readLines(path);
         for (String s : lines) {
             String[] stringList = s.split(" ");
             if (stringList.length != 3) {
@@ -57,14 +57,14 @@ public class Tree extends VCSObject {
     }
 
     public @NotNull Tree add(@NotNull Path path, @NotNull String hash)
-            throws IOException, MyExceptions.UnknownProblem {
+            throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
         if (path.getNameCount() == 0) {
             throw new MyExceptions.UnknownProblem();
         }
         if (path.getNameCount() == 1) {
             List<Blob> blobList = new ArrayList<>(blobs);
             List<Tree> treeList = new ArrayList<>(trees);
-            blobList.add(repository.find(path.getName(0).toString(), hash));
+            blobList.add(repository.findBlob(path.getName(0).toString(), hash));
             return new Tree(name, treeList, blobList, repository);
         } else {
             List<Tree> treeList = new ArrayList<>();

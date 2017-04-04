@@ -45,12 +45,12 @@ public class Branch {
     }
 
     private void write() throws IOException {
-        Format.writeTo(repository.folders.realBranchesFolder.resolve(name), commit.getSHA());
+        FileSystemWorker.writeTo(repository.folders.realBranchesFolder.resolve(name), commit.getSHA());
     }
 
     public Branch(@NotNull Path path, @NotNull Repository repository)
             throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
-        List<String> lines = Format.readLines(path);
+        List<String> lines = FileSystemWorker.readLines(path);
         Commit commit = new Commit(repository.folders.realObjectsFolder.resolve(lines.get(0)), repository);
         if (commit != null) {
             this.name = path.getFileName().toString();

@@ -27,7 +27,7 @@ public abstract class VCSObject {
     public abstract @NotNull String getType();
 
     protected void write() throws IOException {
-        Format.writeTo(repository.folders.realObjectsFolder.resolve(sha), content);
+        FileSystemWorker.writeTo(repository.folders.realObjectsFolder.resolve(sha), content);
     }
 
 

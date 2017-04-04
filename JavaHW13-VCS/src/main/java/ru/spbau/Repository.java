@@ -1,20 +1,16 @@
 package ru.spbau;
 
-import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static ru.spbau.VCSFolders.*;
 
 /** Класс, который отвечает за работу с репозиторием.*/
 public class Repository {
@@ -24,29 +20,19 @@ public class Repository {
     List<Branch> branches = new ArrayList<>();
 
     private Head head;
+    private Index index;
 
     /**
      * Принимает путь до папки и создает в ней новый репозиторий.
      * Бросает исключение, если такой папки не существует или в ней уже создан репозиторий.
      */
     static public @NotNull Repository initRepository(@NotNull Path path) throws IOException,
-            MyExceptions.IsNotDirectoryException, MyExceptions.AlreadyExistsException {
-        if (!Files.isDirectory(path)) {
-            throw new MyExceptions.IsNotDirectoryException();
-        }
+            MyExceptions.IsNotDirectoryException, MyExceptions.AlreadyExistsException, MyExceptions.UnknownProblem {
 
-        if (Files.exists(path.resolve(vcsFolder))) {
-            throw new MyExceptions.AlreadyExistsException();
-        }
+        FileSystemWorker.createRepository(new VCSFolders(path));
 
-        Files.createDirectory(path.resolve(vcsFolder));
-        Files.createFile(path.resolve(HEADFile));
-        Files.createFile(path.resolve(indexFile));
-        Files.createDirectory(path.resolve(objectsFolder));
-        Files.createDirectory(path.resolve(refsFolder));
-        Files.createDirectory(path.resolve(branchesFolder));
-
-        Repository repository = new Repository(path);
+        Repository repository =
+                new Repository(path);
         repository.initialCommit();
         return repository;
     }
@@ -57,38 +43,18 @@ public class Repository {
      * */
     public static void removeRepository(@NotNull Path path) throws IOException,
             MyExceptions.IsNotDirectoryException, MyExceptions.NotFoundException {
-        if (!Files.isDirectory(path)) {
-            throw new MyExceptions.IsNotDirectoryException();
-        }
-        if (!Files.exists(path.resolve(vcsFolder))) {
-            throw new MyExceptions.NotFoundException();
-        }
-        FileUtils.deleteDirectory(path.toFile());
+        FileSystemWorker.deleteRepository(path);
     }
 
     /**
      * Принимает папку с репозиторием и возвращает по ней репозиторий.
      * Бросает исключение, если в папке репозиторий не содержится или содержится в некорректном виде.
      */
-    public static @NotNull Repository getRepository(@NotNull Path path) throws IOException, MyExceptions.NotFoundException {
-        Path realVcs = path.resolve(vcsFolder);
-        Path realHEAD = path.resolve(HEADFile);
-        Path realIndex = path.resolve(indexFile);
-        Path realObjects = path.resolve(objectsFolder);
-        Path realRefs = path.resolve(refsFolder);
-        Path realBranches = path.resolve(branchesFolder);
+    public static @NotNull Repository getRepository(@NotNull Path path)
+            throws IOException, MyExceptions.NotFoundException, MyExceptions.UnknownProblem {
+        VCSFolders folders = new VCSFolders(path);
 
-        if (!Files.isDirectory(path) || Files.notExists(realVcs)
-                || !Files.isDirectory(realVcs)
-                || Files.notExists(realHEAD)
-                || !Files.isRegularFile(realHEAD)
-                || Files.notExists(realIndex)
-                || !Files.isRegularFile(realIndex)
-                || Files.notExists(realObjects)
-                || !Files.isDirectory(realObjects)
-                || Files.notExists(realRefs)
-                || !Files.isDirectory(realRefs)
-                || !Files.isDirectory(realBranches)) {
+        if (!FileSystemWorker.exists(folders)) {
             throw new MyExceptions.NotFoundException();
         }
 
@@ -98,13 +64,13 @@ public class Repository {
     /** Принимает путь до файла, который был добавлен или удален, и изменяет информацию о нем в файле index.*/
     public void add(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem {
         path = folders.repositoryPath.resolve(path);
-        boolean shouldAdd =  Files.exists(path);
+        boolean shouldAdd =  FileSystemWorker.exists(path);
         boolean found = false;
-        List<String> lines = Format.readLines(folders.realIndexFile);
+        List<String> lines = FileSystemWorker.readLines(folders.realIndexFile);
         String content = "";
         String sha = null;
         if (shouldAdd) {
-            sha = Format.getSHAFromByteArray(Format.readByteContent(path));
+            sha = Format.getSHAFromByteArray(FileSystemWorker.readByteContent(path));
         }
         for (String line: lines) {
             String[] strings = line.split(" ");
@@ -123,16 +89,16 @@ public class Repository {
             content += path + " " + sha;
         }
 
-        Format.writeTo(folders.realIndexFile, content.getBytes());
+        FileSystemWorker.writeTo(folders.realIndexFile, content.getBytes());
 
         if (shouldAdd) {
-            Format.writeTo(folders.realObjectsFolder.resolve(sha), Format.readByteContent(path));
+            FileSystemWorker.writeTo(folders.realObjectsFolder.resolve(sha), FileSystemWorker.readByteContent(path));
         }
     }
 
     /** Делает commit с заданным сообщением.*/
     public void commit(@NotNull String message) throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
-        List<String> lines = Format.readLines(folders.realIndexFile);
+        List<String> lines = FileSystemWorker.readLines(folders.realIndexFile);
         List<PathWithSHA> pathsWithSHA = new ArrayList<>();
         for (String line: lines) {
             String[] strings = line.split(" ");
@@ -156,7 +122,8 @@ public class Repository {
      * Принимает название ветки/коммита и переключается на нее/него.
      * Бросает иключение, если ни ветки, ни коммита с таким названием не найдено.
      * */
-    public void checkout(@NotNull String branchName) throws MyExceptions.NotFoundException, IOException {
+    public void checkout(@NotNull String branchName)
+            throws MyExceptions.NotFoundException, IOException, MyExceptions.IsNotFileException, MyExceptions.UnknownProblem {
         Branch branchFound = Branch.find(branchName, branches);
         if (branchFound == null) {
             checkoutOnCommit(branchName);
@@ -196,7 +163,7 @@ public class Repository {
         if (branch != null) {
             if (!head.getType().equals(VCSObject.BRANCH) || head.getBranch() != branch) {
                 branches.remove(branch);
-                Files.deleteIfExists(folders.realBranchesFolder.resolve(name));
+                FileSystemWorker.delete(folders.realBranchesFolder.resolve(name));
             }
         }
     }
@@ -247,13 +214,15 @@ public class Repository {
         updateIndex(commit);
     }
 
-    private Repository(@NotNull Path path) throws IOException {
+    private Repository(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem {
         folders = new VCSFolders(path);
         head = new Head(this);
+        index = new Index(this);
         readAllBranches();
     }
 
-    private void checkoutOnCommit(@NotNull String name) throws IOException, MyExceptions.NotFoundException {
+    private void checkoutOnCommit(@NotNull String name)
+            throws IOException, MyExceptions.NotFoundException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
         Commit commit = findCommit(name);
         if (commit == null) {
             throw new MyExceptions.NotFoundException();
@@ -288,110 +257,80 @@ public class Repository {
     }
 
     private void updateIndex(@NotNull Commit commit) throws IOException {
-        List<PathWithSHA> pathsWithSHA = commit.getTree().constructOriginalPaths(folders.repositoryPath);
-        String content = "";
-        for (PathWithSHA line: pathsWithSHA) {
-            content += (line.getPath() + " " + line.getSHA() + "\n");
-        }
-        Format.writeTo(folders.realIndexFile, content);
-
-        updateUserDirectory(pathsWithSHA);
+        index.update(commit);
+        updateUserDirectory(commit);
     }
 
-    private void updateUserDirectory(@NotNull List<PathWithSHA> pathsWithSHA) throws IOException {
-        Stream<Path> pathStream = Files.walk(folders.repositoryPath);
-        pathStream.forEach(path -> {
+    private void updateUserDirectory(@NotNull Commit commit) throws IOException {
+
+        List<PathWithSHA> pathsWithSHA = commit.getPathWithSHAList();
+        List<Path> paths = FileSystemWorker.walk(folders.repositoryPath);
+
+        for (Path path: paths) {
             if (!path.equals(folders.repositoryPath) && !path.startsWith(folders.realVcsFolder)) {
-                if (Files.isDirectory(path)) {
-                    try {
-                        FileUtils.deleteDirectory(path.toFile());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-                    try {
-                        Files.deleteIfExists(path);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
+                FileSystemWorker.delete(path);
             }
-        });
+        }
 
         for (PathWithSHA pathWithSHA: pathsWithSHA) {
-            addFile(pathWithSHA.getPath(), pathWithSHA.getSHA());
+            addFileToUserDirectory(pathWithSHA.getPath(), pathWithSHA.getSHA());
         }
 
     }
 
-    private void addFile(@NotNull Path path, @NotNull String sha) throws IOException {
-        Files.createDirectories(path.getParent());
-        Stream<Path> pathStream = Files.walk(folders.repositoryPath);
-        pathStream.forEach(vcsobject -> {
-            if (vcsobject.getFileName().toString().equals(sha)) {
+    private void addFileToUserDirectory(@NotNull Path path, @NotNull String name) throws IOException {
+
+        FileSystemWorker.createFile(path);
+        List<Path> paths = FileSystemWorker.walk(folders.repositoryPath);
+
+        for (Path vcsobject: paths) {
+            if (vcsobject.getFileName().toString().equals(name)) {
+                FileSystemWorker.writeTo(path, FileSystemWorker.readByteContent(vcsobject));
+            }
+        }
+
+    }
+
+    private void readAllBranches() throws IOException, MyExceptions.UnknownProblem {
+        List<Path> paths = FileSystemWorker.walk(folders.realBranchesFolder);
+        for (Path path: paths) {
+            if (FileSystemWorker.isFile(path)) {
                 try {
-                    Format.writeTo(path, Format.readByteContent(vcsobject));
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    Branch branch = new Branch(path, this);
+                    branches.add(branch);
+                } catch (MyExceptions.UnknownProblem | MyExceptions.IsNotFileException e) {
+                    throw new MyExceptions.UnknownProblem();
                 }
             }
-        });
-
+        }
     }
 
-    private void readAllBranches() throws IOException {
-        Stream<Path> pathStream = Files.walk(folders.realBranchesFolder);
-        pathStream.forEach(path -> {
-            try {
-                Branch branch = new Branch(path, this);
-                branches.add(branch);
-            } catch (Exception e) {}
-        });
-    }
+    private @Nullable Commit findCommit(@NotNull String hash)
+            throws IOException, MyExceptions.IsNotFileException, MyExceptions.UnknownProblem {
 
-    private @Nullable Commit findCommit(@NotNull String hash) throws IOException {
-        Stream<Path> pathStream = Files.walk(folders.realObjectsFolder);
-        return pathStream.reduce(null, (Commit commit, Path path) -> {
+        List<Path> paths = FileSystemWorker.walk(folders.realObjectsFolder);
+
+        for (Path path: paths) {
             if (path.getFileName().toString().equals(hash)) {
-                try {
-                    return new Commit(path, this);
-                } catch (Exception e) {
-                    return null;
-                }
-            } else {
-                return commit;
+                return new Commit(path, this);
             }
-        }, (Commit commit1, Commit commit2) -> {
-            if (commit1 == null) {
-                return commit2;
-            } else {
-                return commit1;
-            }
-        });
+        }
+
+        return null;
     }
 
-    public  @Nullable Blob find(@NotNull String name, @NotNull String hash)
-            throws IOException {
-        Stream<Path> pathStream = Files.walk(folders.realObjectsFolder);
-        return pathStream.reduce(null, (Blob blob, Path path) -> {
+    public  @Nullable Blob findBlob(@NotNull String name, @NotNull String hash)
+            throws IOException, MyExceptions.IsNotFileException {
+
+        List<Path> paths = FileSystemWorker.walk(folders.realObjectsFolder);
+
+        for (Path path: paths) {
             if (path.getFileName().toString().equals(hash)) {
-                Blob resultBlob = null;
-                try {
-                    resultBlob = new Blob(name, path, this);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                return resultBlob;
-            } else {
-                return blob;
+                return new Blob(name, path, this);
             }
-        }, (Blob blob1, Blob blob2) -> {
-            if (blob1 == null) {
-                return blob2;
-            } else {
-                return blob1;
-            }
-        });
+        }
+
+        return null;
     }
 
 

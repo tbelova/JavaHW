@@ -20,7 +20,7 @@ public class Blob extends VCSObject {
 
         this.repository = repository;
         this.name = name;
-        this.content = Format.readByteContent(path);
+        this.content = FileSystemWorker.readByteContent(path);
         updateSHA();
         write();
     }

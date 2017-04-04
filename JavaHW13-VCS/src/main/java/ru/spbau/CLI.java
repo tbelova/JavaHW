@@ -21,6 +21,8 @@ public class CLI {
             e.printStackTrace();
         } catch (MyExceptions.AlreadyExistsException e) {
             System.out.println("Repository already exists.");
+        } catch (MyExceptions.UnknownProblem unknownProblem) {
+            unknownProblem.printStackTrace();
         }
 
         return true;
@@ -53,7 +55,11 @@ public class CLI {
         } catch (MyExceptions.NotFoundException e) {
             System.out.println("Can't load repository.");
             return null;
+        } catch (MyExceptions.UnknownProblem unknownProblem) {
+            unknownProblem.printStackTrace();
+            return null;
         }
+
         return repository;
     }
 
@@ -111,6 +117,10 @@ public class CLI {
             System.out.println("No such branch or commit.");
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (MyExceptions.IsNotFileException e) {
+            e.printStackTrace();
+        } catch (MyExceptions.UnknownProblem unknownProblem) {
+            unknownProblem.printStackTrace();
         }
 
         return true;

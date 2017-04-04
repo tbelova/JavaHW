@@ -14,7 +14,7 @@ public class Head {
     }
 
     public @NotNull Commit getCommit() throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
-        List<String> lines = Format.readLines(repository.folders.realHEADFile);
+        List<String> lines = FileSystemWorker.readLines(repository.folders.realHEADFile);
         if (lines.size() != 1) {
             throw new MyExceptions.UnknownProblem();
         }
@@ -34,7 +34,7 @@ public class Head {
     }
 
     public @NotNull Branch getBranch() throws IOException, MyExceptions.UnknownProblem {
-        List<String> lines = Format.readLines(repository.folders.realHEADFile);
+        List<String> lines = FileSystemWorker.readLines(repository.folders.realHEADFile);
         if (lines.size() != 1) {
             throw new MyExceptions.UnknownProblem();
         }
@@ -53,7 +53,7 @@ public class Head {
     }
 
     public @NotNull String getType() throws IOException, MyExceptions.UnknownProblem {
-        String[] stringList = Format.readSingleLine(repository.folders.realHEADFile).split(" ");
+        String[] stringList = FileSystemWorker.readSingleLine(repository.folders.realHEADFile).split(" ");
         if (stringList.length != 2) {
             throw new MyExceptions.UnknownProblem();
         }
@@ -73,11 +73,11 @@ public class Head {
     }
 
     public void write(@NotNull Branch branch) throws IOException {
-        Format.writeTo(repository.folders.realHEADFile, (VCSObject.BRANCH + " " + branch.getName()));
+        FileSystemWorker.writeTo(repository.folders.realHEADFile, (VCSObject.BRANCH + " " + branch.getName()));
     }
 
     public void write(@NotNull Commit commit) throws IOException {
-        Format.writeTo(repository.folders.realHEADFile, (VCSObject.COMMIT + " " + commit.getSHA()));
+        FileSystemWorker.writeTo(repository.folders.realHEADFile, (VCSObject.COMMIT + " " + commit.getSHA()));
     }
 
 

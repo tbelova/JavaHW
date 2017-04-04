@@ -18,7 +18,7 @@ public class Commit extends VCSObject implements Comparable<Commit> {
 
     public Commit(@NotNull Path path, @NotNull Repository repository)
             throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
-        List<String> lines = Format.readLines(path);
+        List<String> lines = FileSystemWorker.readLines(path);
         List<Commit> parents = new ArrayList<>();
         for (int i = 4; i < lines.size(); i++) {
             parents.add(new Commit(repository.folders.realObjectsFolder.resolve(lines.get(i)), repository));
@@ -60,6 +60,10 @@ public class Commit extends VCSObject implements Comparable<Commit> {
             }
         }
         return log;
+    }
+
+    public @NotNull List<PathWithSHA> getPathWithSHAList() {
+        return getTree().constructOriginalPaths(repository.folders.repositoryPath);
     }
 
     public @NotNull String getMessage() {
