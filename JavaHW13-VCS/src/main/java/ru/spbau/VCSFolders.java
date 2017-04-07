@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/** Класс, хранящий пути до всех папок и файлов, используемых для работы репозитория.*/
 public class VCSFolders {
 
     public static final Path vcsFolder = Paths.get(".vcsFolder");
@@ -22,6 +23,7 @@ public class VCSFolders {
     public final Path realRefsFolder;
     public final Path realBranchesFolder;
 
+    /** Принимает путь до папки с репозиторием, конструирует VCSFolders.*/
     public @NotNull VCSFolders(@NotNull Path path) {
         repositoryPath = path;
         realVcsFolder = path.resolve(vcsFolder);

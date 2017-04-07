@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/** Класс, отвечающий за работу с коммитом.*/
 public class Commit extends VCSObject implements Comparable<Commit> {
 
     private Tree tree;
@@ -16,6 +17,16 @@ public class Commit extends VCSObject implements Comparable<Commit> {
     private Date date;
     private String author;
 
+    /**
+     * Принимает сообщение для коммита, соответствующее дерево и родителей коммита.
+     * Создает коммит в репозитории и конструирует Commit.
+     */
+    public Commit(@NotNull String message, @NotNull Tree tree, @NotNull List<Commit> parents)
+            throws IOException {
+        this(message, tree, new Date(), System.getProperty("user.name"), parents);
+    }
+
+    /** Принимает путь по файла, соответствующего коммиту, и конструирует Commit.*/
     public Commit(@NotNull Path path, @NotNull Repository repository)
             throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
         List<String> lines = FileSystemWorker.readLines(path);
@@ -24,7 +35,7 @@ public class Commit extends VCSObject implements Comparable<Commit> {
             parents.add(new Commit(repository.folders.realObjectsFolder.resolve(lines.get(i)), repository));
         }
         this.message = lines.get(0);
-        this.tree = Tree.read("root", repository.folders.realObjectsFolder.resolve(lines.get(1)), repository);
+        this.tree = new Tree("root", repository.folders.realObjectsFolder.resolve(lines.get(1)), repository);
         this.date = Format.readDate(lines.get(2));
         this.author = lines.get(3);
         this.parentCommits = parents;
@@ -33,23 +44,7 @@ public class Commit extends VCSObject implements Comparable<Commit> {
         write();
     }
 
-    public Commit(@NotNull String message, @NotNull Tree tree, @NotNull Date date,
-                  @NotNull String author, @NotNull List<Commit> parents, @NotNull Repository repository) throws IOException {
-        this.message = message;
-        this.tree = tree;
-        this.date = date;
-        this.author = author;
-        this.repository = repository;
-        parentCommits = new ArrayList<>(parents);
-        updateSHA();
-        write();
-    }
-
-    public Commit(@NotNull String message, @NotNull Tree tree, @NotNull List<Commit> parents, @NotNull Repository repository)
-            throws IOException {
-        this(message, tree, new Date(), System.getProperty("user.name"), parents, repository);
-    }
-
+    /** Возвращает список коммитов-предков данного коммита.*/
     public @NotNull List<Commit> log() {
         List<Commit> log = new ArrayList<>();
         log.add(this);
@@ -62,29 +57,46 @@ public class Commit extends VCSObject implements Comparable<Commit> {
         return log;
     }
 
+    /** Возвращает список PathWithSHA, соответствующих файлам, принадлежащих коммиту.*/
     public @NotNull List<PathWithSHA> getPathWithSHAList() {
-        return getTree().constructOriginalPaths(repository.folders.repositoryPath);
+        return tree.constructOriginalPaths(repository.folders.repositoryPath);
     }
 
+    /** Возвращает сообщение.*/
     public @NotNull String getMessage() {
         return message;
     }
 
+    /** Возвращает автора коммита.*/
     public @NotNull String getAuthor() {
         return author;
     }
 
+    /** Возвращает дерево, соответсвующее коммиту.*/
     public @NotNull Tree getTree() {
         return tree;
     }
 
+    /** Возвращает дату коммита.*/
     public @NotNull Date getDate() {
         return date;
     }
 
-    @Override
-    public @NotNull String getType() {
-        return VCSObject.COMMIT;
+    /** Возвращает список коммитов-предков.*/
+    public @NotNull List<Commit> getParentCommits() {
+        return parentCommits;
+    }
+
+    private Commit(@NotNull String message, @NotNull Tree tree, @NotNull Date date,
+                   @NotNull String author, @NotNull List<Commit> parents) throws IOException {
+        this.message = message;
+        this.tree = tree;
+        this.date = date;
+        this.author = author;
+        this.repository = tree.getRepository();
+        parentCommits = new ArrayList<>(parents);
+        updateSHA();
+        write();
     }
 
     private void updateSHA() {

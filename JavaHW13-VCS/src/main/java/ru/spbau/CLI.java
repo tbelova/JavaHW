@@ -281,4 +281,110 @@ public class CLI {
     }
 
 
+    public static boolean tryStatus(String[] args, Repository repository) {
+
+        if (!args[0].equals("status")) {
+            return false;
+        }
+
+        if (args.length != 1) {
+            System.out.println("Wrong number of arguments.");
+            return true;
+        }
+
+        try {
+            List<File> files = repository.status();
+            for (File file: files) {
+                if (file.getType() == File.CHANGED) {
+                    System.out.print("changed: ");
+                } else if (file.getType() == File.DELETED) {
+                    System.out.print("deleted: ");
+                } else if (file.getType() == File.STAGED) {
+                    System.out.print("staged: ");
+                } else if (file.getType() == File.UNTRACKED) {
+                    System.out.print("untracked: ");
+                }
+                System.out.println(file.getPath());
+            }
+        } catch (MyExceptions.UnknownProblem unknownProblem) {
+            unknownProblem.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
+    public static boolean tryReset(String[] args, Repository repository) {
+
+        if (!args[0].equals("reset")) {
+            return false;
+        }
+
+        if (args.length != 2) {
+            System.out.println("Wrong number of arguments.");
+            return true;
+        }
+
+        try {
+            repository.reset(Paths.get(args[1]));
+        } catch (MyExceptions.UnknownProblem unknownProblem) {
+            unknownProblem.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (MyExceptions.IsNotFileException e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
+    public static boolean tryRm(String[] args, Repository repository) {
+
+        if (!args[0].equals("rm")) {
+            return false;
+        }
+
+        if (args.length != 2) {
+            System.out.println("Wrong number of arguments.");
+            return true;
+        }
+
+        try {
+            repository.rm(Paths.get(args[1]));
+        } catch (MyExceptions.UnknownProblem unknownProblem) {
+            unknownProblem.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
+    public static boolean tryClean(String[] args, Repository repository) {
+
+        if (!args[0].equals("clean")) {
+            return false;
+        }
+
+        if (args.length != 1) {
+            System.out.println("Wrong number of arguments.");
+            return true;
+        }
+
+        try {
+            repository.clean();
+        } catch (MyExceptions.UnknownProblem unknownProblem) {
+            unknownProblem.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
+
+
+
+
 }

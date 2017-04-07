@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Класс, отвечающий за работу в деревом.*/
 public class Tree extends VCSObject {
 
     private String name;
@@ -16,17 +17,14 @@ public class Tree extends VCSObject {
     private List<Tree> trees;
     private List<Blob> blobs;
 
-    public static @NotNull Tree read(@NotNull String name, @NotNull Path path, @NotNull Repository repository)
-            throws MyExceptions.IsNotFileException,
-            IOException, MyExceptions.UnknownProblem {
+    /** Принимает имя файла, путь до файла с деревом и репозиторий и конструирует Tree.*/
+    public Tree(@NotNull String name, @NotNull Path path, @NotNull Repository repository) throws IOException,
+            MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+
         if (!Files.isRegularFile(path)) {
             throw new MyExceptions.IsNotFileException();
         }
-        return new Tree(name, path, repository);
-    }
 
-    public Tree(@NotNull String name, @NotNull Path path, @NotNull Repository repository) throws IOException,
-            MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
         this.repository = repository;
 
         content = FileSystemWorker.readByteContent(path);
@@ -45,17 +43,19 @@ public class Tree extends VCSObject {
             if (stringList[0].equals(VCSObject.BLOB)) {
                 blobs.add(new Blob(stringList[1], path.getParent().resolve(stringList[2]), repository));
             } else if (stringList[0].equals(VCSObject.TREE)) {
-                trees.add(read(stringList[1], path.getParent().resolve(stringList[2]), repository));
+                trees.add(new Tree(stringList[1], path.getParent().resolve(stringList[2]), repository));
             } else {
                 throw new MyExceptions.UnknownProblem();
             }
         }
     }
 
+    /** Возвращает имя директории, за которую отвечает дерево.*/
     public @NotNull String getName() {
         return name;
     }
 
+    /** Принимает путь до файла и хеш содержимого и добавляет соответствующий Blob в дерево.*/
     public @NotNull Tree add(@NotNull Path path, @NotNull String hash)
             throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
         if (path.getNameCount() == 0) {
@@ -89,6 +89,7 @@ public class Tree extends VCSObject {
 
     }
 
+    /** Принимает путь до директории и возвращает дерево, соответствующее содержимому этой директории.*/
     public @NotNull List<PathWithSHA> constructOriginalPaths(@NotNull Path path) {
         List<PathWithSHA> pathsWithSHA = new ArrayList<>();
         for (Blob blob: blobs) {
@@ -102,6 +103,17 @@ public class Tree extends VCSObject {
         }
 
         return pathsWithSHA;
+    }
+
+    /** Принимает имя директории и репозиторий и конструирует пустое дерево, соответсвующее этой директории.*/
+    public Tree(@NotNull String name, @NotNull Repository repository) throws IOException {
+        this.name = name;
+        this.repository = repository;
+        content = new byte[0];
+        trees = new ArrayList<>();
+        blobs = new ArrayList<>();
+        updateSHA();
+        write();
     }
 
     private Tree(@NotNull String name, @NotNull List<Tree> trees, @NotNull List<Blob> blobs, @NotNull Repository repository)
@@ -120,21 +132,6 @@ public class Tree extends VCSObject {
         content = outputStream.toByteArray();
         updateSHA();
         write();
-    }
-
-    public Tree(@NotNull String name, @NotNull Repository repository) throws IOException {
-        this.name = name;
-        this.repository = repository;
-        content = new byte[0];
-        trees = new ArrayList<>();
-        blobs = new ArrayList<>();
-        updateSHA();
-        write();
-    }
-
-    @Override
-    public @NotNull String getType() {
-        return VCSObject.TREE;
     }
 
     private void updateSHA() {

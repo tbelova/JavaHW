@@ -13,10 +13,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+/** Класс, отвечающий за то, в каком виде используются разные вспомогательные объекты.*/
 public class Format {
 
     private static String dateFormat = "MM/dd/yyyy HH:mm:ss";
 
+    /** Принимает строчку. Возвращает объект типа Date, который ей соответствует.*/
     public static @NotNull Date readDate(@NotNull String date) throws MyExceptions.UnknownProblem {
         DateFormat df = new SimpleDateFormat(dateFormat);
         try {
@@ -26,11 +28,13 @@ public class Format {
         }
     }
 
+    /** Принимает дату. Возвращает строчку, которая ей соответствует.*/
     public static @NotNull String writeDate(@NotNull Date date) {
         DateFormat df = new SimpleDateFormat(dateFormat);
         return df.format(date);
     }
 
+    /** Возвращает хеш от переданного набора байт.*/
     public static @NotNull String getSHAFromByteArray(@NotNull byte[] content) {
         return DigestUtils.sha1Hex(content);
     }

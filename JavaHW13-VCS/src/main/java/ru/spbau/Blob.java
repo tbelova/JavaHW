@@ -7,10 +7,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/** Класс, отвечающий за файл, хранящийся в репозитории.*/
 public class Blob extends VCSObject {
 
     private String name;
 
+    /** Принимает имя файла, путь до его копии в репозитории и репозиторий и конструирует Blob.*/
     public Blob(@NotNull String name, @NotNull Path path, @NotNull Repository repository)
             throws MyExceptions.IsNotFileException, IOException {
 
@@ -22,9 +24,12 @@ public class Blob extends VCSObject {
         this.name = name;
         this.content = FileSystemWorker.readByteContent(path);
         updateSHA();
-        write();
     }
 
+    /**
+     * Принимает имя файла, его содержимое и репозиторий.
+     * Создает соответствующий файл в репозитории и конструирует Blob.
+     */
     public Blob(@NotNull String name, @NotNull byte[] content, @NotNull Repository repository) throws IOException {
         this.content = content;
         this.name = name;
@@ -33,11 +38,7 @@ public class Blob extends VCSObject {
         write();
     }
 
-    @Override
-    public @NotNull String getType() {
-        return VCSObject.BLOB;
-    }
-
+    /** Возвращает имя файла, соответствующего этому Blob-у.*/
     public @NotNull String getName() {
         return name;
     }

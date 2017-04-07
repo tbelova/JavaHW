@@ -19,15 +19,23 @@ public class Main {
         knownCommand |= CLI.tryInit(args, currentPath);
         knownCommand |= CLI.tryRemove(args, currentPath);
 
-        Repository repository = CLI.getRepository(currentPath);
+        if (!knownCommand) {
 
-        knownCommand |= CLI.tryBranch(args, repository);
-        knownCommand |= CLI.tryCheckout(args, repository);
-        knownCommand |= CLI.tryDeleteBranch(args, repository);
-        knownCommand |= CLI.tryAdd(args, repository);
-        knownCommand |= CLI.tryCommit(args, repository);
-        knownCommand |= CLI.tryLog(args, repository);
-        knownCommand |= CLI.tryMerge(args, repository);
+            Repository repository = CLI.getRepository(currentPath);
+
+            knownCommand |= CLI.tryBranch(args, repository);
+            knownCommand |= CLI.tryCheckout(args, repository);
+            knownCommand |= CLI.tryDeleteBranch(args, repository);
+            knownCommand |= CLI.tryAdd(args, repository);
+            knownCommand |= CLI.tryCommit(args, repository);
+            knownCommand |= CLI.tryLog(args, repository);
+            knownCommand |= CLI.tryMerge(args, repository);
+            knownCommand |= CLI.tryStatus(args, repository);
+            knownCommand |= CLI.tryReset(args, repository);
+            knownCommand |= CLI.tryRm(args, repository);
+            knownCommand |= CLI.tryClean(args, repository);
+
+        }
 
         if (!knownCommand) {
             System.out.println("Unknown command.");
