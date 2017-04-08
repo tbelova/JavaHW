@@ -26,13 +26,20 @@ public class Repository {
      * Бросает исключение, если такой папки не существует или в ней уже создан репозиторий.
      */
     static public @NotNull Repository initRepository(@NotNull Path path) throws IOException,
-            MyExceptions.IsNotDirectoryException, MyExceptions.AlreadyExistsException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+            MyExceptions.AlreadyExistsException, MyExceptions.UnknownProblem {
 
-        FileSystemWorker.createRepository(new VCSFolders(path));
+        try {
+            FileSystemWorker.createRepository(new VCSFolders(path));
+        } catch (MyExceptions.IsNotDirectoryException e) {
+            throw new MyExceptions.UnknownProblem();
+        }
 
-        Repository repository =
-                new Repository(path);
-        repository.initialCommit();
+        Repository repository = new Repository(path);
+        try {
+            repository.initialCommit();
+        } catch (MyExceptions.IsNotFileException e) {
+            throw new MyExceptions.UnknownProblem();
+        }
         return repository;
     }
 
@@ -96,16 +103,21 @@ public class Repository {
     }
 
     /** Делает commit с заданным сообщением.*/
-    public void commit(@NotNull String message) throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
-        Tree root = getTreeForCommit(index.getPathsWithSHA());
-        ArrayList<Commit> parents = new ArrayList<>();
-        parents.add(head.getCommitAnyway());
-        Commit commit = new Commit(message, root, parents);
-        if (head.getType().equals(VCSObject.BRANCH)) {
-            head.getBranch().setCommit(commit);
-        } else {
-            writeToHEAD(commit);
+    public void commit(@NotNull String message) throws IOException, MyExceptions.UnknownProblem {
+        try {
+            Tree root = getTreeForCommit(index.getPathsWithSHA());
+            ArrayList<Commit> parents = new ArrayList<>();
+            parents.add(head.getCommitAnyway());
+            Commit commit = new Commit(message, root, parents);
+            if (head.getType().equals(VCSObject.BRANCH)) {
+                head.getBranch().setCommit(commit);
+            } else {
+                writeToHEAD(commit);
+            }
+        } catch (MyExceptions.IsNotFileException e) {
+            throw new MyExceptions.UnknownProblem();
         }
+
     }
 
     /**
@@ -113,7 +125,7 @@ public class Repository {
      * Бросает иключение, если ни ветки, ни коммита с таким названием не найдено.
      * */
     public void checkout(@NotNull String branchName)
-            throws MyExceptions.NotFoundException, IOException, MyExceptions.IsNotFileException, MyExceptions.UnknownProblem {
+            throws MyExceptions.NotFoundException, IOException, MyExceptions.UnknownProblem {
         Branch branchFound = findBranch(branchName);
         if (branchFound == null) {
             checkoutOnCommit(branchName);
@@ -127,8 +139,7 @@ public class Repository {
      * Бросает исключение, если ветка с таким названием уже существует.
      */
     public void branch(@NotNull String newBranchName) throws MyExceptions.AlreadyExistsException,
-            IOException, MyExceptions.UnknownProblem, MyExceptions.WrongFormatException,
-            MyExceptions.IsNotFileException {
+            IOException, MyExceptions.UnknownProblem, MyExceptions.WrongFormatException {
         if (newBranchName.contains(" ")) {
             throw new MyExceptions.WrongFormatException();
         }
@@ -142,7 +153,7 @@ public class Repository {
     /** Создает ветку с указанным названием и сразу переключается на нее.*/
     public void createBranchAndCheckout(@NotNull String branchName) throws MyExceptions.UnknownProblem,
             IOException, MyExceptions.AlreadyExistsException, MyExceptions.NotFoundException,
-            MyExceptions.WrongFormatException, MyExceptions.IsNotFileException {
+            MyExceptions.WrongFormatException {
         branch(branchName);
         checkout(branchName);
     }
@@ -164,7 +175,7 @@ public class Repository {
     }
 
     /** Возвращает отсортированный до дате создания список коммитов-предков текущего коммита.*/
-    public @NotNull List<LogMessage> log() throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+    public @NotNull List<LogMessage> log() throws IOException, MyExceptions.UnknownProblem {
         Commit rootCommit = head.getCommitAnyway();
         List<Commit> commits = rootCommit.log();
         commits = commits.stream().distinct().collect(Collectors.toList());
@@ -177,7 +188,7 @@ public class Repository {
      * Бросает исключение, если указанной ветки не существует.
      * */
     public void merge(@NotNull String branchName) throws MyExceptions.NotFoundException,
-            IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+            IOException, MyExceptions.UnknownProblem {
         Branch curBranch = head.getBranch();
         Branch branch = findBranch(branchName);
         if (branch == null) {
@@ -195,7 +206,12 @@ public class Repository {
 
         pathsWithSHA.addAll(pathsWithSHAOther);
 
-        Tree root = getTreeForCommit(pathsWithSHA);
+        Tree root;
+        try {
+            root = getTreeForCommit(pathsWithSHA);
+        } catch (MyExceptions.IsNotFileException e) {
+            throw new MyExceptions.UnknownProblem();
+        }
 
         Commit commit = new Commit("Merge " + branchName + " into " + curBranch.getName() + ".",
                 root, parents);
@@ -242,7 +258,7 @@ public class Repository {
     }
 
     private void checkoutOnCommit(@NotNull String name)
-            throws IOException, MyExceptions.NotFoundException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+            throws IOException, MyExceptions.NotFoundException, MyExceptions.UnknownProblem {
         Commit commit = findCommit(name);
         if (commit == null) {
             throw new MyExceptions.NotFoundException();
@@ -250,7 +266,8 @@ public class Repository {
         writeToHEAD(commit);
     }
 
-    private @NotNull Tree getTreeForCommit(@NotNull List<PathWithSHA> lines) throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+    private @NotNull Tree getTreeForCommit(@NotNull List<PathWithSHA> lines)
+            throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
         Tree root = new Tree("root", this);
         for (PathWithSHA line: lines) {
             root = root.add(folders.repositoryPath.relativize(line.getPath()), line.getSHA());
@@ -259,29 +276,29 @@ public class Repository {
         return root;
     }
 
-    private void initialCommit() throws IOException, MyExceptions.IsNotFileException {
+    private void initialCommit() throws IOException, MyExceptions.IsNotFileException, MyExceptions.UnknownProblem {
         Branch branch = new Branch("master", new Commit("Initial commit",
                 new Tree("root", this), new ArrayList<>()));
         branches.add(branch);
         writeToHEAD(branch);
     }
 
-    private void writeToHEAD(@NotNull Branch branch) throws IOException, MyExceptions.IsNotFileException {
+    private void writeToHEAD(@NotNull Branch branch) throws IOException, MyExceptions.UnknownProblem {
         head.write(branch);
         updateIndex(branch.getCommit());
     }
 
-    private void writeToHEAD(@NotNull Commit commit) throws IOException, MyExceptions.IsNotFileException {
+    private void writeToHEAD(@NotNull Commit commit) throws IOException, MyExceptions.UnknownProblem {
         head.write(commit);
         updateIndex(commit);
     }
 
-    private void updateIndex(@NotNull Commit commit) throws IOException, MyExceptions.IsNotFileException {
+    private void updateIndex(@NotNull Commit commit) throws IOException, MyExceptions.UnknownProblem {
         index.update(commit);
         updateUserDirectory(commit);
     }
 
-    private void updateUserDirectory(@NotNull Commit commit) throws IOException, MyExceptions.IsNotFileException {
+    private void updateUserDirectory(@NotNull Commit commit) throws IOException, MyExceptions.UnknownProblem {
 
         List<PathWithSHA> pathsWithSHA = commit.getPathWithSHAList();
         List<Path> paths = FileSystemWorker.walk(folders.repositoryPath);
@@ -298,7 +315,8 @@ public class Repository {
 
     }
 
-    private void addFileToUserDirectory(@NotNull Path path, @NotNull String sha) throws IOException, MyExceptions.IsNotFileException {
+    private void addFileToUserDirectory(@NotNull Path path, @NotNull String sha)
+            throws IOException, MyExceptions.UnknownProblem {
 
         FileSystemWorker.createFile(path);
         FileSystemWorker.writeTo(path, findBlob(path.getFileName().toString(), sha).getContent());
@@ -320,13 +338,17 @@ public class Repository {
     }
 
     private @Nullable Commit findCommit(@NotNull String hash)
-            throws IOException, MyExceptions.IsNotFileException, MyExceptions.UnknownProblem {
+            throws IOException, MyExceptions.UnknownProblem {
 
         List<Path> paths = FileSystemWorker.walk(folders.realObjectsFolder);
 
         for (Path path: paths) {
             if (path.getFileName().toString().equals(hash)) {
-                return new Commit(path, this);
+                try {
+                    return new Commit(path, this);
+                } catch (MyExceptions.IsNotFileException e) {
+                    throw new MyExceptions.UnknownProblem();
+                }
             }
         }
 
@@ -334,13 +356,17 @@ public class Repository {
     }
 
     @Nullable Blob findBlob(@NotNull String name, @NotNull String hash)
-            throws IOException, MyExceptions.IsNotFileException {
+            throws IOException, MyExceptions.UnknownProblem {
 
         List<Path> paths = FileSystemWorker.walk(folders.realObjectsFolder);
 
         for (Path path: paths) {
             if (path.getFileName().toString().equals(hash)) {
-                return new Blob(name, path, this);
+                try {
+                    return new Blob(name, path, this);
+                } catch (MyExceptions.IsNotFileException e) {
+                    throw new MyExceptions.UnknownProblem();
+                }
             }
         }
 
@@ -356,7 +382,6 @@ public class Repository {
         }
         return branchFound;
     }
-
 
 
 }

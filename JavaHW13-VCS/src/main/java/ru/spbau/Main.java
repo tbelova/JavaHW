@@ -3,6 +3,7 @@ package ru.spbau;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/** Класс, отвечающий за работу с командной строкой.*/
 public class Main {
 
     public static void main(String[] args) {

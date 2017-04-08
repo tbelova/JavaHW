@@ -19,7 +19,7 @@ public class Head {
      * Если в файле Head лежит текущий коммит, возвращает его.
      * Иначе бросает исключение.
      */
-    public @NotNull Commit getCommit() throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+    public @NotNull Commit getCommit() throws IOException, MyExceptions.UnknownProblem {
         List<String> lines = FileSystemWorker.readLines(repository.folders.realHEADFile);
         if (lines.size() != 1) {
             throw new MyExceptions.UnknownProblem();
@@ -31,8 +31,12 @@ public class Head {
         if (!stringList[0].equals(VCSObject.COMMIT)) {
             throw new MyExceptions.UnknownProblem();
         }
-        Commit commit = new Commit(repository.folders.realObjectsFolder.resolve(stringList[1]),
-                repository);
+        Commit commit;
+        try {
+            commit = new Commit(repository.folders.realObjectsFolder.resolve(stringList[1]), repository);
+        } catch (MyExceptions.IsNotFileException e) {
+            throw new MyExceptions.UnknownProblem();
+        }
         if (commit == null) {
             throw new MyExceptions.UnknownProblem();
         }
@@ -75,7 +79,7 @@ public class Head {
     }
 
     /** Если в Head записан коммит, возвращает его, иначе возвращает коммит, на который указывает текущая ветка.*/
-    public @NotNull Commit getCommitAnyway() throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+    public @NotNull Commit getCommitAnyway() throws IOException, MyExceptions.UnknownProblem {
         if (getType().equals(VCSObject.BRANCH)) {
             return getBranch().getCommit();
         } else {
@@ -84,7 +88,7 @@ public class Head {
     }
 
     /** Возвращает дерево, на которое указывает текущий коммит.*/
-    public @NotNull Tree getTree() throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+    public @NotNull Tree getTree() throws IOException, MyExceptions.UnknownProblem {
         return getCommitAnyway().getTree();
     }
 

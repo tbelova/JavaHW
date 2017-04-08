@@ -10,7 +10,9 @@ public class MyExceptions {
     public static class IsNotFileException extends Exception {}
 
     /** Исключение, которое бросается в случае неправильной работы программы, не зависящей от пользователя.*/
-    public static class UnknownProblem extends Exception {}
+    public static class UnknownProblem extends Exception {
+        static final String defaultMessage = "Unknown problem";
+    }
 
     /** Исключение, которое бросается при попытке работать с несуществубщей директорией.*/
     public static class NotFoundException extends Exception {}
