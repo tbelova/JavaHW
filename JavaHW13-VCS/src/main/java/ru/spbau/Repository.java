@@ -214,15 +214,15 @@ public class Repository {
         path = folders.repositoryPath.resolve(path);
         String sha = index.getSHA(path);
         if (sha == null) {
-            throw new MyExceptions.UnknownProblem();
+            FileSystemWorker.delete(path);
+        } else {
+            addFileToUserDirectory(path, sha);
         }
-        addFileToUserDirectory(path, sha);
     }
 
     /** Удаляет переданный файл как из репозитория, так и физически.*/
     public void rm(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem {
-        path = folders.repositoryPath.resolve(path);
-        FileSystemWorker.delete(path);
+        FileSystemWorker.delete(folders.repositoryPath.resolve(path));
         add(path);
     }
 

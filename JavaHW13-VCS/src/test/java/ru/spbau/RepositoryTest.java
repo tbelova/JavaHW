@@ -12,6 +12,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class RepositoryTest {
+
     private Path repositoryPath = Paths.get("JavaTest");
 
     @Before
@@ -27,6 +28,7 @@ public class RepositoryTest {
 
     @Test
     public void simpleAddTest() throws Exception {
+
         Repository repository = Repository.getRepository(repositoryPath);
 
         Files.createDirectory(repositoryPath.resolve("dir1"));
@@ -38,10 +40,12 @@ public class RepositoryTest {
 
         assertTrue(Files.exists(repositoryPath.resolve("dir1/file1")));
         assertTrue(Files.exists(repositoryPath.resolve("dir1/file2")));
+
     }
 
     @Test
     public void simpleWorkWithBranchesTest() throws Exception {
+
         Repository repository = Repository.getRepository(repositoryPath);
 
         assertEquals("master", repository.getCurrentBranch());
@@ -55,6 +59,7 @@ public class RepositoryTest {
         repository.createBranchAndCheckout("super_master");
 
         assertEquals("super_master", repository.getCurrentBranch());
+
     }
 
     @Test
@@ -65,6 +70,7 @@ public class RepositoryTest {
 
     @Test
     public void simpleAddAndCommitTest() throws Exception {
+
         Repository repository = Repository.getRepository(repositoryPath);
 
         Files.createDirectory(repositoryPath.resolve("dir1"));
@@ -75,10 +81,12 @@ public class RepositoryTest {
         repository.add(Paths.get("dir1/file2"));
 
         repository.commit("First commit!");
+
     }
 
     @Test
     public void workWithBranchesTest() throws Exception {
+
         Repository repository = Repository.getRepository(repositoryPath);
 
         assertFalse(Files.exists(repositoryPath.resolve("dir1/file1")));
@@ -101,10 +109,12 @@ public class RepositoryTest {
         repository.checkout("new_branch");
 
         assertTrue(Files.exists(repositoryPath.resolve("dir1/file1")));
+
     }
 
     @Test
     public void simpleLogTest() throws Exception {
+
         Repository repository = Repository.getRepository(repositoryPath);
         repository.commit("First commit!");
         repository.commit("Second commit!");
@@ -113,10 +123,12 @@ public class RepositoryTest {
         assertEquals("Initial commit", logMessageList.get(0).getMessage());
         assertEquals("First commit!", logMessageList.get(1).getMessage());
         assertEquals("Second commit!", logMessageList.get(2).getMessage());
+
     }
 
     @Test
     public void logTest() throws Exception {
+
         Repository repository = Repository.getRepository(repositoryPath);
 
         assertEquals(1, repository.log().size());
@@ -139,6 +151,7 @@ public class RepositoryTest {
 
     @Test
     public void simpleMergeTest() throws Exception {
+
         Repository repository = Repository.getRepository(repositoryPath);
 
         repository.createBranchAndCheckout("first");
@@ -155,6 +168,7 @@ public class RepositoryTest {
 
     @Test
     public void mergeTest() throws Exception {
+
         Repository repository = Repository.getRepository(repositoryPath);
 
         repository.createBranchAndCheckout("first");
@@ -210,6 +224,121 @@ public class RepositoryTest {
         assertTrue(Files.exists(repositoryPath.resolve("dir1/file1")));
         assertTrue(Files.exists(repositoryPath.resolve("dir1/file2")));
         assertTrue(Files.exists(repositoryPath.resolve("dir2/file1")));
+
+    }
+
+    @Test
+    public void simpleStatusTest() throws Exception {
+
+        Repository repository = Repository.getRepository(repositoryPath);
+
+        List<File> files = repository.status();
+        assertEquals(0, files.size());
+
+        Files.createFile(repositoryPath.resolve("a"));
+
+        files = repository.status();
+        assertEquals(1, files.size());
+        assertEquals(File.UNTRACKED, files.get(0).getType());
+
+        repository.add(Paths.get("a"));
+
+        files = repository.status();
+        assertEquals(1, files.size());
+        assertEquals(File.STAGED, files.get(0).getType());
+
+        FileSystemWorker.writeTo(repositoryPath.resolve("a"), "yay");
+
+        files = repository.status();
+        assertEquals(1, files.size());
+        assertEquals(File.CHANGED, files.get(0).getType());
+    }
+
+    @Test
+    public void simpleResetTest() throws Exception {
+
+        Repository repository = Repository.getRepository(repositoryPath);
+
+        Files.createFile(repositoryPath.resolve("a"));
+
+        List<File> files = repository.status();
+        assertEquals(1, files.size());
+        assertEquals(File.UNTRACKED, files.get(0).getType());
+
+        repository.reset(Paths.get("a"));
+
+        files = repository.status();
+        assertEquals(0, files.size());
+
+        Files.createFile(repositoryPath.resolve("b"));
+
+        files = repository.status();
+        assertEquals(1, files.size());
+        assertEquals(File.UNTRACKED, files.get(0).getType());
+
+        repository.add(Paths.get("b"));
+
+        files = repository.status();
+        assertEquals(1, files.size());
+        assertEquals(File.STAGED, files.get(0).getType());
+
+        FileSystemWorker.writeTo(repositoryPath.resolve("b"), "bb");
+
+        assertEquals(1, FileSystemWorker.readLines(repositoryPath.resolve("b")).size());
+
+        files = repository.status();
+        assertEquals(1, files.size());
+        assertEquals(File.CHANGED, files.get(0).getType());
+
+        repository.reset(Paths.get("b"));
+
+        files = repository.status();
+        assertEquals(1, files.size());
+        assertEquals(File.STAGED, files.get(0).getType());
+
+        assertEquals(0, FileSystemWorker.readLines(repositoryPath.resolve("b")).size());
+
+    }
+
+    @Test
+    public void simpleRmTest() throws Exception {
+
+        Repository repository = Repository.getRepository(repositoryPath);
+
+        Files.createFile(repositoryPath.resolve("a"));
+        assertEquals(1, repository.status().size());
+
+        repository.rm(Paths.get("a"));
+        assertEquals(0, repository.status().size());
+
+        Files.createFile(repositoryPath.resolve("b"));
+        repository.add(Paths.get("b"));
+        assertEquals(1, repository.status().size());
+
+        repository.rm(Paths.get("b"));
+
+        assertEquals(0, repository.status().size());
+
+    }
+
+    @Test
+    public void simpleCleanTest() throws Exception {
+
+        Repository repository = Repository.getRepository(repositoryPath);
+
+        Files.createFile(repositoryPath.resolve("a"));
+        Files.createFile(repositoryPath.resolve("b"));
+        Files.createFile(repositoryPath.resolve("c"));
+        Files.createFile(repositoryPath.resolve("d"));
+
+        repository.add(Paths.get("a"));
+        repository.add(Paths.get("b"));
+
+        assertEquals(4, repository.status().size());
+
+        repository.clean();
+
+        assertEquals(2, repository.status().size());
 
     }
 
