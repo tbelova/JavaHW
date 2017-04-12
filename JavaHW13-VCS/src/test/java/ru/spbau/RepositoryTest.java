@@ -255,7 +255,7 @@ public class RepositoryTest {
     }
 
     @Test
-    public void simpleResetTest() throws Exception {
+    public void simpleResetToStagedTest() throws Exception {
 
         Repository repository = Repository.getRepository(repositoryPath);
 
@@ -265,7 +265,7 @@ public class RepositoryTest {
         assertEquals(1, files.size());
         assertEquals(File.UNTRACKED, files.get(0).getType());
 
-        repository.reset(Paths.get("a"));
+        repository.resetToStaged(Paths.get("a"));
 
         files = repository.status();
         assertEquals(0, files.size());
@@ -290,13 +290,36 @@ public class RepositoryTest {
         assertEquals(1, files.size());
         assertEquals(File.CHANGED, files.get(0).getType());
 
-        repository.reset(Paths.get("b"));
+        repository.resetToStaged(Paths.get("b"));
 
         files = repository.status();
         assertEquals(1, files.size());
         assertEquals(File.STAGED, files.get(0).getType());
 
         assertEquals(0, FileSystemWorker.readLines(repositoryPath.resolve("b")).size());
+
+    }
+
+    @Test
+    public void simpleResetToCommitTest() throws Exception {
+
+        Repository repository = Repository.getRepository(repositoryPath);
+
+        Files.createFile(repositoryPath.resolve("a"));
+
+        repository.add(Paths.get("a"));
+
+        repository.commit("a");
+
+        FileSystemWorker.writeTo(repositoryPath.resolve("a"), "yay");
+
+        repository.add(Paths.get("a"));
+
+        assertEquals("yay", FileSystemWorker.readSingleLine(repositoryPath.resolve("a")));
+
+        repository.resetToCommit(repositoryPath.resolve("a"));
+
+        assertEquals(0, FileSystemWorker.readByteContent(repositoryPath.resolve("a")).length);
 
     }
 

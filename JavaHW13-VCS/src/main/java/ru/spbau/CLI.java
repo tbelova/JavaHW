@@ -160,6 +160,11 @@ public class CLI {
             return false;
         }
 
+        if (args.length == 3) {
+            tryDeleteBranch(args, repository);
+            return true;
+        }
+
         if (!checkNumberOfArguments(2, args.length)) {
             return true;
         }
@@ -186,16 +191,12 @@ public class CLI {
 
         logger.debug("tryDeleteBranch is called");
 
-        if (!args[0].equals("branch_rm")) {
+        if (!args[1].equals("delete")) {
             return false;
         }
 
-        if (!checkNumberOfArguments(2, args.length)) {
-            return true;
-        }
-
         try {
-            repository.removeBranch(args[1]);
+            repository.removeBranch(args[2]);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (MyExceptions.UnknownProblem e) {
@@ -367,7 +368,7 @@ public class CLI {
 
     /**
      * Принимает аргументы программы и путь до директории, откуда она запускается.
-     * Если дана команда reset, сбрасывает состояние указанного файла и возвращает true.
+     * Если дана команда resetToStaged, сбрасывает состояние указанного файла и возвращает true.
      * Иначе возвращает false.
      */
     public static boolean tryReset(String[] args, Repository repository) {
@@ -383,13 +384,11 @@ public class CLI {
         }
 
         try {
-            repository.reset(Paths.get(args[1]));
+            repository.resetToCommit(Paths.get(args[1]));
         } catch (MyExceptions.UnknownProblem e) {
             System.out.println(MyExceptions.UnknownProblem.defaultMessage);
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (MyExceptions.IsNotFileException e) {
-            System.out.println(args[1] + " is not a file.");
         }
 
         return true;

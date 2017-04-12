@@ -1,6 +1,7 @@
 package ru.spbau;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -60,6 +61,21 @@ public class Commit extends VCSObject implements Comparable<Commit> {
     /** Возвращает список PathWithSHA, соответствующих файлам, принадлежащих коммиту.*/
     public @NotNull List<PathWithSHA> getPathWithSHAList() {
         return tree.constructOriginalPaths(repository.folders.repositoryPath);
+    }
+
+    /** Принимает путь до файла, возвращает хеш его содержимого с этом коммите.*/
+    public @Nullable String getPathWithSHAForFile(@NotNull Path path) {
+
+        List<PathWithSHA> pathWithSHAs = getPathWithSHAList();
+
+        for (PathWithSHA pathWithSHA: pathWithSHAs) {
+            if (pathWithSHA.getPath().equals(path)) {
+                return pathWithSHA.getSHA();
+            }
+        }
+
+        return null;
+
     }
 
     /** Возвращает сообщение.*/

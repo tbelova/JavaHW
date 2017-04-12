@@ -293,10 +293,10 @@ public class Repository {
         return index.getAllFiles();
     }
 
-    /** Сбрасывает состояние переданного файла.*/
-    public void reset(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+    /** Принимает путь до файла. Сбрасывает его состояние до того, что находится в индексе.*/
+    public void resetToStaged(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
 
-        logger.debug("reset is called with path {}", path);
+        logger.debug("resetToStaged is called with path {}", path);
 
         path = folders.repositoryPath.resolve(path);
         String sha = index.getSHA(path);
@@ -305,6 +305,25 @@ public class Repository {
             FileSystemWorker.delete(path);
         } else {
             addFileToUserDirectory(path, sha);
+        }
+
+    }
+
+    /** Принимает путь до файла, сбрасывает его состояние до последнего коммита.*/
+    public void resetToCommit(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("resetToCommit is called with path {}", path);
+
+        Commit commit = head.getCommitAnyway();
+
+        String sha = commit.getPathWithSHAForFile(path);
+
+        if (sha == null) {
+            FileSystemWorker.delete(path);
+            add(path);
+        } else {
+            addFileToUserDirectory(path, sha);
+            add(path);
         }
 
     }
