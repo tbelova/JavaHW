@@ -3,12 +3,21 @@ package ru.spbau;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 /** Класс, отвечающий за работу с командной строкой.*/
 public class Main {
 
+    private static Logger logger = LoggerFactory.getLogger(Main.class);
+
     public static void main(String[] args) {
+        
+        logger.debug("main is called");
 
         if (args.length == 0) {
+            logger.error("no arguments found.");
             System.out.println("Some arguments?");
             return;
         }
@@ -39,6 +48,7 @@ public class Main {
         }
 
         if (!knownCommand) {
+            logger.error("no such command found");
             System.out.println("Unknown command.");
         }
 

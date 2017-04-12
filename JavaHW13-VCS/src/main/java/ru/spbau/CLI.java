@@ -5,11 +5,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 /** Класс, отвечающий за обработку аргументов, переданных программе на вход.*/
 public class CLI {
 
     private static String TOO_MANY_ARGUMENTS = "Too many arguments.";
     private static String TOO_FEW_ARGUMENTS = "Too few arguments.";
+
+    private static Logger logger = LoggerFactory.getLogger(CLI.class);
 
     /**
      * Принимает аргументы программы и путь до директории, откуда она запускается.
@@ -17,6 +23,8 @@ public class CLI {
      * Иначе возвращает false.
      */
     public static boolean tryInit(String[] args, Path path) {
+
+        logger.debug("tryInit is called with path {}", path);
 
         if (!args[0].equals("init")) {
             return false;
@@ -46,6 +54,8 @@ public class CLI {
      */
     public static boolean tryRemove(String[] args, Path path) {
 
+        logger.debug("tryRemove is called with path {}", path);
+
         if (!args[0].equals("remove")) {
             return false;
         }
@@ -73,6 +83,8 @@ public class CLI {
      */
     public static Repository getRepository(Path path) {
 
+        logger.debug("getRepository is called with path {}", path);
+
         Repository repository = null;
 
         try {
@@ -95,6 +107,8 @@ public class CLI {
      * Иначе возвращает false.
      */
     public static boolean tryBranch(String[] args, Repository repository) {
+
+        logger.debug("tryBranch is called");
 
         if (!args[0].equals("branch")) {
             return false;
@@ -140,6 +154,8 @@ public class CLI {
      */
     public static boolean tryCheckout(String[] args, Repository repository) {
 
+        logger.debug("tryCheckout is called");
+
         if (!args[0].equals("checkout")) {
             return false;
         }
@@ -168,6 +184,8 @@ public class CLI {
      */
     public static boolean tryDeleteBranch(String[] args, Repository repository) {
 
+        logger.debug("tryDeleteBranch is called");
+
         if (!args[0].equals("branch_rm")) {
             return false;
         }
@@ -193,6 +211,8 @@ public class CLI {
      * Иначе возвращает false.
      */
     public static boolean tryAdd(String[] args, Repository repository) {
+
+        logger.debug("tryAdd is called");
 
         if (!args[0].equals("add")) {
             return false;
@@ -221,6 +241,8 @@ public class CLI {
      */
     public static boolean tryCommit(String[] args, Repository repository) {
 
+        logger.debug("tryCommit is called");
+
         if (!args[0].equals("commit")) {
             return false;
         }
@@ -246,6 +268,8 @@ public class CLI {
      * Иначе возвращает false.
      */
     public static boolean tryLog(String[] args, Repository repository) {
+
+        logger.debug("tryLog is called");
 
         if (!args[0].equals("log")) {
             return false;
@@ -277,6 +301,8 @@ public class CLI {
      */
     public static boolean tryMerge(String[] args, Repository repository) {
 
+        logger.debug("tryMerge is called");
+
         if (!args[0].equals("merge")) {
             return false;
         }
@@ -305,6 +331,8 @@ public class CLI {
      * Иначе возвращает false.
      */
     public static boolean tryStatus(String[] args, Repository repository) {
+
+        logger.debug("tryStatus is called");
 
         if (!args[0].equals("status")) {
             return false;
@@ -344,6 +372,8 @@ public class CLI {
      */
     public static boolean tryReset(String[] args, Repository repository) {
 
+        logger.debug("tryReset is called");
+
         if (!args[0].equals("reset")) {
             return false;
         }
@@ -372,6 +402,8 @@ public class CLI {
      */
     public static boolean tryRm(String[] args, Repository repository) {
 
+        logger.debug("tryRm is called");
+
         if (!args[0].equals("rm")) {
             return false;
         }
@@ -397,6 +429,8 @@ public class CLI {
      * Иначе возвращает false.
      */
     public static boolean tryClean(String[] args, Repository repository) {
+
+        logger.debug("tryClean is called");
 
         if (!args[0].equals("clean")) {
             return false;

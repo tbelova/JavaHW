@@ -10,16 +10,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /** Класс, который отвечает за работу с репозиторием.*/
 public class Repository {
 
     VCSFolders folders;
 
-    List<Branch> branches = new ArrayList<>();
+    private List<Branch> branches = new ArrayList<>();
 
     private Head head;
     private Index index;
+
+    private static Logger logger = LoggerFactory.getLogger(Repository.class);
 
     /**
      * Принимает путь до папки и создает в ней новый репозиторий.
@@ -28,19 +33,27 @@ public class Repository {
     static public @NotNull Repository initRepository(@NotNull Path path) throws IOException,
             MyExceptions.AlreadyExistsException, MyExceptions.UnknownProblem {
 
+        logger.debug("initRepository is called with path {}", path);
+
         try {
             FileSystemWorker.createRepository(new VCSFolders(path));
         } catch (MyExceptions.IsNotDirectoryException e) {
+            logger.error("can't find such directory");
             throw new MyExceptions.UnknownProblem();
         }
 
         Repository repository = new Repository(path);
+        logger.debug("build repository");
         try {
             repository.initialCommit();
+            logger.debug("create initial commit");
         } catch (MyExceptions.IsNotFileException e) {
+            logger.error("fail to create initial commit");
             throw new MyExceptions.UnknownProblem();
         }
+
         return repository;
+
     }
 
     /**
@@ -49,7 +62,11 @@ public class Repository {
      * */
     public static void removeRepository(@NotNull Path path) throws IOException,
             MyExceptions.IsNotDirectoryException, MyExceptions.NotFoundException {
+
+        logger.debug("removeRepository is called with path {}", path);
+
         FileSystemWorker.deleteRepository(path);
+
     }
 
     /**
@@ -58,9 +75,13 @@ public class Repository {
      */
     public static @NotNull Repository getRepository(@NotNull Path path)
             throws IOException, MyExceptions.NotFoundException, MyExceptions.UnknownProblem {
+
+        logger.debug("getRepository is called with path {}", path);
+
         VCSFolders folders = new VCSFolders(path);
 
         if (!FileSystemWorker.exists(folders)) {
+            logger.debug("cat'n find all repository folders");
             throw new MyExceptions.NotFoundException();
         }
 
@@ -69,15 +90,28 @@ public class Repository {
 
     /** Принимает путь до файла, который был добавлен или удален, и изменяет информацию о нем в файле index.*/
     public void add(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("add is called with path {}", path);
+
         path = folders.repositoryPath.resolve(path);
+
         boolean shouldAdd =  FileSystemWorker.exists(path);
         boolean found = false;
+
+        if (shouldAdd) {
+            logger.info("should add file");
+        } else {
+            logger.info("should remove file");
+        }
+
         List<String> lines = FileSystemWorker.readLines(folders.realIndexFile);
         String content = "";
         String sha = null;
+
         if (shouldAdd) {
             sha = Format.getSHAFromByteArray(FileSystemWorker.readByteContent(path));
         }
+
         for (String line: lines) {
             String[] strings = line.split(" ");
             if (strings.length != 2) {
@@ -104,6 +138,9 @@ public class Repository {
 
     /** Делает commit с заданным сообщением.*/
     public void commit(@NotNull String message) throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("commit is called with message {}", message);
+
         try {
             Tree root = getTreeForCommit(index.getPathsWithSHA());
             ArrayList<Commit> parents = new ArrayList<>();
@@ -126,6 +163,9 @@ public class Repository {
      * */
     public void checkout(@NotNull String branchName)
             throws MyExceptions.NotFoundException, IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("checkout is called with branch name {}", branchName);
+
         Branch branchFound = findBranch(branchName);
         if (branchFound == null) {
             checkoutOnCommit(branchName);
@@ -140,26 +180,41 @@ public class Repository {
      */
     public void branch(@NotNull String newBranchName) throws MyExceptions.AlreadyExistsException,
             IOException, MyExceptions.UnknownProblem, MyExceptions.WrongFormatException {
+
+        logger.debug("branch is called with new branch name {}", newBranchName);
+
         if (newBranchName.contains(" ")) {
+            logger.error("branch contains spaces");
             throw new MyExceptions.WrongFormatException();
         }
+
         Branch branch = findBranch(newBranchName);
+
         if (branch != null) {
+            logger.error("branch already exists");
             throw new MyExceptions.AlreadyExistsException();
         }
+
         branches.add(new Branch(newBranchName, head.getCommitAnyway()));
+
     }
 
     /** Создает ветку с указанным названием и сразу переключается на нее.*/
     public void createBranchAndCheckout(@NotNull String branchName) throws MyExceptions.UnknownProblem,
             IOException, MyExceptions.AlreadyExistsException, MyExceptions.NotFoundException,
             MyExceptions.WrongFormatException {
+
+        logger.debug("createBranchAndCheckout is called with new branch name {}", branchName);
+
         branch(branchName);
         checkout(branchName);
     }
 
     /** Удаляет ветку с указанным названием.*/
     public void removeBranch(@NotNull String name) throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("removeBranch is called with branch name {}", name);
+
         Branch branch = findBranch(name);
         if (branch != null) {
             if (!head.getType().equals(VCSObject.BRANCH) || head.getBranch() != branch) {
@@ -171,11 +226,17 @@ public class Repository {
 
     /** Возвращает название текущей ветки.*/
     public @NotNull String getCurrentBranch() throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("getCurrentBranch is called");
+
         return head.getBranch().getName();
     }
 
     /** Возвращает отсортированный до дате создания список коммитов-предков текущего коммита.*/
     public @NotNull List<LogMessage> log() throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("log is called");
+
         Commit rootCommit = head.getCommitAnyway();
         List<Commit> commits = rootCommit.log();
         commits = commits.stream().distinct().collect(Collectors.toList());
@@ -189,9 +250,13 @@ public class Repository {
      * */
     public void merge(@NotNull String branchName) throws MyExceptions.NotFoundException,
             IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("merge is called with branch name {}", branchName);
+
         Branch curBranch = head.getBranch();
         Branch branch = findBranch(branchName);
         if (branch == null) {
+            logger.error("no such branch found");
             throw new MyExceptions.NotFoundException();
         }
 
@@ -222,83 +287,134 @@ public class Repository {
 
     /** Возвращает список объектов типа File, соответствующих файлам, хранящихся в репозитории.*/
     public List<File> status() throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("status is called");
+
         return index.getAllFiles();
     }
 
     /** Сбрасывает состояние переданного файла.*/
     public void reset(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+
+        logger.debug("reset is called with path {}", path);
+
         path = folders.repositoryPath.resolve(path);
         String sha = index.getSHA(path);
+
         if (sha == null) {
             FileSystemWorker.delete(path);
         } else {
             addFileToUserDirectory(path, sha);
         }
+
     }
 
     /** Удаляет переданный файл как из репозитория, так и физически.*/
     public void rm(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("rm is called with path {}", path);
+
         FileSystemWorker.delete(folders.repositoryPath.resolve(path));
         add(path);
+
     }
 
     /** Удаляет все файлы, не добавленные в репозиторий.*/
     public void clean() throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("clean is called");
+
         List<File> untrackedFiles = index.getUntrackedFiles();
         for (File file: untrackedFiles) {
             FileSystemWorker.delete(file.getPath());
         }
+
     }
 
     private Repository(@NotNull Path path) throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("Repository constructor is called with path {}", path);
+
         folders = new VCSFolders(path);
         head = new Head(this);
         index = new Index(this);
         readAllBranches();
+
     }
 
     private void checkoutOnCommit(@NotNull String name)
             throws IOException, MyExceptions.NotFoundException, MyExceptions.UnknownProblem {
+
+        logger.debug("checkoutOnCommit is called with commit name {}", name);
+
         Commit commit = findCommit(name);
+
         if (commit == null) {
             throw new MyExceptions.NotFoundException();
         }
+
         writeToHEAD(commit);
+
     }
 
     private @NotNull Tree getTreeForCommit(@NotNull List<PathWithSHA> lines)
             throws IOException, MyExceptions.UnknownProblem, MyExceptions.IsNotFileException {
+
+        logger.debug("getTreeForCommit is called");
+
         Tree root = new Tree("root", this);
+
         for (PathWithSHA line: lines) {
             root = root.add(folders.repositoryPath.relativize(line.getPath()), line.getSHA());
         }
 
         return root;
+
     }
 
     private void initialCommit() throws IOException, MyExceptions.IsNotFileException, MyExceptions.UnknownProblem {
+
+        logger.debug("initialCommit is called");
+
         Branch branch = new Branch("master", new Commit("Initial commit",
                 new Tree("root", this), new ArrayList<>()));
+
         branches.add(branch);
+
         writeToHEAD(branch);
+
     }
 
     private void writeToHEAD(@NotNull Branch branch) throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("writeToHEAD is called");
+
         head.write(branch);
         updateIndex(branch.getCommit());
+
     }
 
     private void writeToHEAD(@NotNull Commit commit) throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("writeToCommit is called");
+
         head.write(commit);
         updateIndex(commit);
+
     }
 
     private void updateIndex(@NotNull Commit commit) throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("updateIndex is called");
+
         index.update(commit);
         updateUserDirectory(commit);
+
     }
 
     private void updateUserDirectory(@NotNull Commit commit) throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("updateUserDirectory is called");
 
         List<PathWithSHA> pathsWithSHA = commit.getPathWithSHAList();
         List<Path> paths = FileSystemWorker.walk(folders.repositoryPath);
@@ -318,13 +434,19 @@ public class Repository {
     private void addFileToUserDirectory(@NotNull Path path, @NotNull String sha)
             throws IOException, MyExceptions.UnknownProblem {
 
+        logger.debug("addFileToUserDirectory is called with path {} and hash {}", path, sha);
+
         FileSystemWorker.createFile(path);
         FileSystemWorker.writeTo(path, findBlob(path.getFileName().toString(), sha).getContent());
 
     }
 
     private void readAllBranches() throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("readAllBranches is called");
+
         List<Path> paths = FileSystemWorker.walk(folders.realBranchesFolder);
+
         for (Path path: paths) {
             if (FileSystemWorker.isFile(path)) {
                 try {
@@ -335,10 +457,13 @@ public class Repository {
                 }
             }
         }
+
     }
 
     private @Nullable Commit findCommit(@NotNull String hash)
             throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("findCommit is called with hash {}", hash);
 
         List<Path> paths = FileSystemWorker.walk(folders.realObjectsFolder);
 
@@ -353,10 +478,13 @@ public class Repository {
         }
 
         return null;
+
     }
 
     @Nullable Blob findBlob(@NotNull String name, @NotNull String hash)
             throws IOException, MyExceptions.UnknownProblem {
+
+        logger.debug("findBlob is called with name {} and hash {}", name, hash);
 
         List<Path> paths = FileSystemWorker.walk(folders.realObjectsFolder);
 
@@ -371,16 +499,22 @@ public class Repository {
         }
 
         return null;
+
     }
 
     @Nullable Branch findBranch(@NotNull String name) {
+
+        logger.debug("findBranch is called with name {}", name);
+
         Branch branchFound = null;
         for (Branch branch: branches) {
             if (branch.getName().equals(name)) {
                 branchFound = branch;
             }
         }
+
         return branchFound;
+
     }
 
 
