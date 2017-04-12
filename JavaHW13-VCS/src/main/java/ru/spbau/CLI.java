@@ -283,7 +283,7 @@ public class CLI {
         try {
             List<LogMessage> log = repository.log();
             for (LogMessage logMessage : log) {
-                System.out.println(logMessage.getCommit() + "\n" + logMessage.getMessage() +
+                System.out.println(logMessage.getCommit() + "\n" + logMessage.getMessage() + "\n" +
                         logMessage.getAuthor() + "\n" + logMessage.getDate() + "\n");
             }
         } catch (MyExceptions.UnknownProblem e) {

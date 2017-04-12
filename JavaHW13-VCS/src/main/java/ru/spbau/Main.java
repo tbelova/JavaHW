@@ -35,7 +35,6 @@ public class Main {
 
             knownCommand |= CLI.tryBranch(args, repository);
             knownCommand |= CLI.tryCheckout(args, repository);
-            knownCommand |= CLI.tryDeleteBranch(args, repository);
             knownCommand |= CLI.tryAdd(args, repository);
             knownCommand |= CLI.tryCommit(args, repository);
             knownCommand |= CLI.tryLog(args, repository);
