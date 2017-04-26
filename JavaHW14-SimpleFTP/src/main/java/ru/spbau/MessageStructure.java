@@ -30,11 +30,30 @@ public class MessageStructure {
 
         int n = length.getInt();
 
-        System.out.println("get = " + n);
-
         return n;
 
     }
+
+    public ByteBuffer readIntToBuffer() throws IOException {
+
+        ByteBuffer length = ByteBuffer.allocate(lengthNumberOfBytes);
+
+        socketChannel.read(length);
+
+        return length;
+
+    }
+
+    public ByteBuffer readBytesToBuffer(int n) throws IOException {
+
+        ByteBuffer message = ByteBuffer.allocate(n);
+
+        socketChannel.read(message);
+
+        return message;
+
+    }
+
 
     public boolean readBool() throws IOException {
         int n = readInt();
@@ -44,8 +63,6 @@ public class MessageStructure {
     public String readString() throws IOException {
 
         String string = new String(readByteArray());
-
-        System.out.println("get string " + string);
 
         return string;
 
@@ -68,14 +85,33 @@ public class MessageStructure {
 
     public void writeInt(int n) throws IOException {
 
-        System.out.println("send = " + n);
-
         ByteBuffer buf = ByteBuffer.allocate(lengthNumberOfBytes);
         buf.putInt(n);
 
         buf.flip();
         socketChannel.write(buf);
 
+    }
+
+    public void writeIntToBuffer(int n, ByteBuffer buffer) {
+        buffer.putInt(n);
+    }
+
+    public void writeStringToBuffer(String s, ByteBuffer buffer) {
+        writeByteArrayToBuffer(s.getBytes(), buffer);
+    }
+
+    public void writeBoolToBuffer(boolean bool, ByteBuffer buffer) {
+        if (bool) {
+            writeIntToBuffer(1, buffer);
+        } else {
+            writeIntToBuffer(0, buffer);
+        }
+    }
+
+    public void writeByteArrayToBuffer(byte[] bytes, ByteBuffer buffer) {
+        buffer.putInt(bytes.length);
+        buffer.put(bytes);
     }
 
     public void writeBool(boolean bool) throws IOException {
@@ -95,8 +131,6 @@ public class MessageStructure {
     }
 
     public void writeString(String string) throws IOException {
-
-        System.out.println("send string: " + string);
 
         writeByteArray(string.getBytes());
 
