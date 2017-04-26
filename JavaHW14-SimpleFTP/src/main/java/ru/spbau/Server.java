@@ -1,5 +1,6 @@
 package ru.spbau;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
+/**
+ * Сервер, умеющий обрабатывать два запроса:
+ * list — листинг файлов в директории на сервере
+ * get — скачивание файла с сервера
+ */
 public class Server {
 
     public final static int PORT = 1234;
@@ -33,10 +39,12 @@ public class Server {
     private static Logger logger = LoggerFactory.getLogger(Server.class);
 
 
-    public Server(Path path) {
+    /** Конструирует сервер, отвечающий за указанную папку.*/
+    public Server(@NotNull Path path) {
         this.path = path;
     }
 
+    /** Запускает сервер.*/
     public void start() throws IOException {
 
         logger.debug("start");
@@ -201,13 +209,22 @@ public class Server {
 
     }
 
-    private ByteBuffer list(Path requestedPath) throws IOException {
+    /** Останавливает сервер.*/
+    public void stop() throws InterruptedException, IOException {
+
+        logger.debug("stop");
+
+        isWorking = false;
+        selector.wakeup();
+        thread.join();
+
+    }
+
+    private @NotNull ByteBuffer list(@NotNull Path requestedPath) throws IOException {
 
         logger.debug("list with path {}", requestedPath);
 
-        ByteBuffer buffer = ByteBuffer.allocate(100);
-
-        BufferMessageStructure messageStructure = new BufferMessageStructure(buffer);
+        BufferMessageStructure messageStructure = new BufferMessageStructure();
 
         if (!Files.exists(requestedPath)) {
 
@@ -226,19 +243,17 @@ public class Server {
 
         }
 
-        buffer.flip();
+        messageStructure.getBuffer().flip();
 
-        return buffer;
+        return messageStructure.getBuffer();
 
     }
 
-    private ByteBuffer get(Path requestedPath) throws IOException {
+    private @NotNull ByteBuffer get(@NotNull Path requestedPath) throws IOException {
 
         logger.debug("get with path {}", requestedPath);
 
-        ByteBuffer buffer = ByteBuffer.allocate(100);
-
-        BufferMessageStructure messageStructure = new BufferMessageStructure(buffer);
+        BufferMessageStructure messageStructure = new BufferMessageStructure();
 
         if (!Files.exists(requestedPath) || !Files.isRegularFile(requestedPath)) {
             messageStructure.writeInt(0);
@@ -246,19 +261,9 @@ public class Server {
 
         messageStructure.writeByteArray(Files.readAllBytes(requestedPath));
 
-        buffer.flip();
+        messageStructure.getBuffer().flip();
 
-        return buffer;
-
-    }
-
-    public void stop() throws InterruptedException, IOException {
-
-        logger.debug("stop");
-
-        isWorking = false;
-        selector.wakeup();
-        thread.join();
+        return messageStructure.getBuffer();
 
     }
 

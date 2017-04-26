@@ -1,5 +1,7 @@
 package ru.spbau;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+/**
+ * Клиент, позволяющий исполнять два запроса:
+ * list — листинг файлов в директории на сервере
+ * get — скачивание файла с сервера
+ */
 public class Client {
 
     private SocketChannel socketChannel;
@@ -20,7 +27,8 @@ public class Client {
 
     private Logger logger = LoggerFactory.getLogger(Client.class);
 
-    public List<FileWithType> list(String path) throws IOException {
+    /** Принимает директорию, возвращает список FileWithType всех файлов и папок в этой директории.*/
+    public @Nullable List<FileWithType> list(@NotNull String path) throws IOException {
 
         logger.debug("in list with path {}", path);
 
@@ -47,7 +55,8 @@ public class Client {
 
     }
 
-    public void get(String path, String homePath) throws IOException {
+    /** Принимает два пути. Получает содержимое файла с сервера по первому пути и записывает его в файл по второму пути.*/
+    public void get(@NotNull String path, @NotNull String homePath) throws IOException {
 
         logger.debug("in get with path {} and homePath {}", path, homePath);
 
@@ -68,6 +77,7 @@ public class Client {
 
     }
 
+    /** Устанавливает соединение с сервером.*/
     public void connect() throws IOException {
 
         socketChannel = SocketChannel.open();
@@ -77,6 +87,7 @@ public class Client {
 
     }
 
+    /** Разрывает соединение с сервером.*/
     public void disconnect() throws IOException {
 
         socketChannel.close();

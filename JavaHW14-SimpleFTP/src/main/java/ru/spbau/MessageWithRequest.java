@@ -1,14 +1,18 @@
 package ru.spbau;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.file.Path;
 
+/** Класс, объекты которого прикрепляются к selectionKey. Хранит в себе запрос к серверу.*/
 public class MessageWithRequest extends AttachedMessage {
 
     private int type;
 
     private Path path;
 
-    public MessageWithRequest(int type, Path path) {
+    /** Конструктор от типа запроса и пути до файла/папки.*/
+    public MessageWithRequest(int type, @NotNull Path path) {
 
         this.messageType = AttachedMessage.REQUEST;
 
@@ -17,11 +21,13 @@ public class MessageWithRequest extends AttachedMessage {
 
     }
 
+    /** Возвращает тип запроса.*/
     public int getType() {
         return type;
     }
 
-    public Path getPath() {
+    /** Возвращает путь до файла/папки.*/
+    public @NotNull Path getPath() {
         return path;
     }
 

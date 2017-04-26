@@ -1,8 +1,11 @@
 package ru.spbau;
 
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 
+
+/** Класс, объекты которого прикрепляются к selectionKey. Хранит в себе частично прочитанное сообщение.*/
 public class MessageRead extends AttachedMessage {
 
     private ByteBuffer type;
@@ -11,7 +14,7 @@ public class MessageRead extends AttachedMessage {
 
     private ByteBuffer buffer;
 
-    public MessageRead(ByteBuffer type, ByteBuffer size, ByteBuffer buffer) {
+    public MessageRead(@Nullable ByteBuffer type, @Nullable ByteBuffer size, @Nullable ByteBuffer buffer) {
 
         this.messageType = AttachedMessage.READ;
 
@@ -21,15 +24,15 @@ public class MessageRead extends AttachedMessage {
 
     }
 
-    public ByteBuffer getType() {
+    public @Nullable ByteBuffer getType() {
         return type;
     }
 
-    public ByteBuffer getSize() {
+    public @Nullable ByteBuffer getSize() {
         return size;
     }
 
-    public ByteBuffer getBuffer() {
+    public @Nullable ByteBuffer getBuffer() {
         return buffer;
     }
 

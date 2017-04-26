@@ -1,6 +1,7 @@
 package ru.spbau;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -64,23 +65,21 @@ public class ClientAndServerTest {
     }
 
     @Test
-    public void list() throws Exception {
+    public void simpleListTest() throws Exception {
 
         Client client = new Client();
         connect(client);
 
         List<FileWithType> files = client.list("");
 
-        for (FileWithType fileWithType: files) {
-            System.out.println(fileWithType.getName() + " is directory = " + fileWithType.IsDir());
-        }
+        Assert.assertEquals(3, files.size());
 
         client.disconnect();
 
     }
 
     @Test
-    public void get() throws Exception {
+    public void simpleGetTest() throws Exception {
 
         Client client = new Client();
         connect(client);
@@ -94,7 +93,7 @@ public class ClientAndServerTest {
 
         String content = new String(bytes);
 
-        System.out.println("content = " + content);
+        Assert.assertEquals("hey", content);
 
         client.disconnect();
 
