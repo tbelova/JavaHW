@@ -25,7 +25,7 @@ public class Client {
 
     private MessageStructure messageStructure;
 
-    private Logger logger = LoggerFactory.getLogger(Client.class);
+    private static Logger logger = LoggerFactory.getLogger(Client.class);
 
     /** Принимает директорию, возвращает список FileWithType всех файлов и папок в этой директории.*/
     public @Nullable List<FileWithType> list(@NotNull String path) throws IOException {
