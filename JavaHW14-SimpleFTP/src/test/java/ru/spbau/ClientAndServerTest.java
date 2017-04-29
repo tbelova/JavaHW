@@ -178,6 +178,49 @@ public class ClientAndServerTest {
 
     }
 
+    @Test
+    public void multipleClientsTest() throws Exception {
+
+        logger.debug("in multipleClientsTest");
+
+        Client client1 = new Client();
+        Client client2 = new Client();
+        Client client3 = new Client();
+
+        connect(client1);
+
+        Path myFileA = myPath.resolve("a");
+        Path myFileB = myPath.resolve("b");
+        Files.createFile(myFileA);
+        Files.createFile(myFileB);
+
+        connect(client2);
+        connect(client3);
+
+        List<FileWithType> files = client3.list("");
+
+        Assert.assertNotNull(files);
+        Assert.assertEquals(3, files.size());
+
+        client1.get("a", myFileA.toString());
+        client2.get("b", myFileB.toString());
+
+        byte[] bytesA = Files.readAllBytes(myFileA);
+        byte[] bytesB = Files.readAllBytes(myFileB);
+
+        String contentA = new String(bytesA);
+        String contentB = new String(bytesB);
+
+        Assert.assertEquals("hey", contentA);
+        Assert.assertEquals("yay", contentB);
+
+        client1.disconnect();
+        client2.disconnect();
+        client3.disconnect();
+
+    }
+
+
     @After
     public void after() throws Exception {
 
