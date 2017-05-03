@@ -1,6 +1,5 @@
 package ru.spbau;
 
-import javafx.application.Application;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

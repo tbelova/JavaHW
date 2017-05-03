@@ -23,7 +23,7 @@ public class BufferMessageStructure {
     }
 
     /** Возвращает буфер.*/
-    public ByteBuffer getBuffer() {
+    public @NotNull ByteBuffer getBuffer() {
         return buffer;
     }
 

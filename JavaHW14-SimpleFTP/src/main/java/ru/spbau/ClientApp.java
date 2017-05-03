@@ -6,16 +6,24 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Класс, отвечающий за интерфейс клиента.
+ */
 public class ClientApp extends Application {
 
+    /**
+     * Перегруженный метод класса Application.
+     * Запускает графический интерфейс.
+     */
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(@NotNull Stage primaryStage) throws Exception {
 
         Manager manager = new Manager();
 
@@ -49,7 +57,6 @@ public class ClientApp extends Application {
 
         });
 
-
         VBox vBox = new VBox(table.get(), saveButton);
 
         Scene scene = new Scene(vBox, 400, 300);
@@ -59,6 +66,7 @@ public class ClientApp extends Application {
 
     }
 
+    /** Запускает клиента.*/
     public static void main(String[] args) {
         Application.launch(args);
     }

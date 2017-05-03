@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+/** Класс, осуществляющий работу клиента.*/
 public class Manager {
 
     private final Client client;
@@ -18,6 +19,7 @@ public class Manager {
 
     private Path currentPath;
 
+    /** Создает новый объект Manager, запоминает директорию, за которую отвечает сервер, как корневую.*/
     public Manager() throws IOException {
 
         logger.debug("in constructor");
@@ -26,6 +28,7 @@ public class Manager {
         client = new Client();
     }
 
+    /** Делает запрос к серверу. Возвращает список файлов в текущей директории.*/
     public List<FileWithType> getFileList() throws IOException {
 
         logger.debug("in getFileList");
@@ -38,6 +41,7 @@ public class Manager {
 
     }
 
+    /** Принимает имя папки и переходит в нее.*/
     public void goTo(@NotNull TableViewItem item) throws IOException {
 
         logger.debug("in goTo {}", item.getName());
@@ -53,6 +57,7 @@ public class Manager {
 
     }
 
+    /** Принимает имя файла, который нужно скачать, и путь, по которому его нужно сохранить.*/
     public void saveFile(@NotNull String fileName, @NotNull Path homePath) throws IOException {
 
         logger.debug("in saveFile {} to {}", fileName, homePath);
@@ -63,6 +68,7 @@ public class Manager {
 
     }
 
+    /** Возвращает текущюю директорию.*/
     public @NotNull Path getCurrentPath() {
         return currentPath;
     }

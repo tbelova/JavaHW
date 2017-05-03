@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/** Класс, отвечающий за работу с таблицей, хранящей информацию о файлах и папках.*/
 public class FileSystemTableView {
 
     private TableView<TableViewItem> table;
@@ -25,6 +26,10 @@ public class FileSystemTableView {
 
     private static Logger logger = LoggerFactory.getLogger(FileSystemTableView.class);
 
+    /**
+     * Конструктор от объекта типа Manager.
+     * Создает таблицу, в которой есть всего одна папка.
+     */
     public FileSystemTableView(@NotNull Manager manager) throws IOException {
 
         logger.debug("in constructor");
@@ -55,7 +60,6 @@ public class FileSystemTableView {
 
         data = FXCollections.observableArrayList();
         data.add(new TableViewItem(manager.getCurrentPath().getFileName().toString(), true));
-        //data.add(new TableViewItem("root", true));
         table.setItems(data);
 
         table.setRowFactory(param -> {
@@ -87,10 +91,12 @@ public class FileSystemTableView {
 
     }
 
+    /** Возвращает таблицу.*/
     public @NotNull TableView<TableViewItem> get() {
         return table;
     }
 
+    /** Обновляет состояние таблицы в зависимости от текущей папки.*/
     public void update() throws IOException {
 
         logger.debug("in update");
