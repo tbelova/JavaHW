@@ -1,5 +1,6 @@
 package ru.spbau;
 
+import javafx.application.Application;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -38,6 +40,29 @@ public class Server {
 
     private static Logger logger = LoggerFactory.getLogger(Server.class);
 
+    /**
+     * В качестве аргумента принимает относительный путь до папки и запускает сервер, который будет отвечать за нее.
+     * Если аргументов нет, то запускает сервер, отвечающий за текущую папку.
+     */
+    public static void main(String[] args) throws IOException {
+
+        Path path = Paths.get(System.getProperty("user.dir"));
+
+        if (args.length > 1) {
+            System.out.println("Wrong number of arguments");
+            return;
+        }
+
+        if (args.length == 1) {
+            path = path.resolve(args[0]);
+        }
+
+        Server server = new Server(path);
+
+        server.start();
+
+    }
+
 
     /** Конструирует сервер, отвечающий за указанную папку.*/
     public Server(@NotNull Path path) {
@@ -47,7 +72,7 @@ public class Server {
     /** Запускает сервер.*/
     public void start() throws IOException {
 
-        logger.debug("start");
+        logger.debug("start with path {}", path);
 
         isWorking = true;
 
@@ -66,6 +91,8 @@ public class Server {
             try {
 
                 while(isWorking){
+
+                    logger.debug("in while");
 
                     selector.select();
 
@@ -139,8 +166,11 @@ public class Server {
 
                                         Path requestedPath = path.resolve(new String(pathBuf.array()));
 
-                                        SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_WRITE);
-                                        selectionKey.attach(new MessageWithRequest(typeBuf.getInt(), requestedPath));
+                                        //SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_WRITE);
+                                        //selectionKey.attach(new MessageWithRequest(typeBuf.getInt(), requestedPath));
+
+                                        key.interestOps(SelectionKey.OP_WRITE);
+                                        key.attach(new MessageWithRequest(typeBuf.getInt(), requestedPath));
 
                                         continue;
                                     }
@@ -149,8 +179,9 @@ public class Server {
 
                             }
 
-                            SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_READ);
-                            selectionKey.attach(new MessageRead(typeBuf, sizeBuf, pathBuf));
+                            key.attach(new MessageRead(typeBuf, sizeBuf, pathBuf));
+                            //SelectionKey selectionKey = channel.register(selector, SelectionKey.OP_READ);
+                            //selectionKey.attach(new MessageRead(typeBuf, sizeBuf, pathBuf));
 
                         } else if (key.isWritable()) {
 
@@ -175,18 +206,18 @@ public class Server {
 
                             } else {
 
-                                logger.debug("continue writing");
-
                                 buffer = ((MessageWrite)message).getBuffer();
 
                             }
 
-                            logger.debug("try to send {} bytes", buffer.remaining());
                             channel.write(buffer);
-                            logger.debug("{} bytes left", buffer.remaining());
 
                             key.attach(new MessageWrite(buffer));
 
+                            if (buffer.remaining() == 0) {
+                                key.interestOps(0);
+                                channel.finishConnect();
+                            }
                         }
 
                         keyIterator.remove();

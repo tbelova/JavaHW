@@ -25,7 +25,7 @@ public class FileWithType {
     }
 
     /** Возвращает true для папки и false иначе.*/
-    public boolean IsDir() {
+    public boolean isDir() {
         return is_dir;
     }
 

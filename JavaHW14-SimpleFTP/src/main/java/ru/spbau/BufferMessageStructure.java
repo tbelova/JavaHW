@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 /** Класс, позволяющий писать в буфер.*/
 public class BufferMessageStructure {
 
-    private final static int MAX_SIZE = 4096;
+    private final static int MAX_SIZE = 4096 * 4096;
 
     private ByteBuffer buffer;
 
