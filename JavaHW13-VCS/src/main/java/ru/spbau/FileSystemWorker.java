@@ -57,10 +57,12 @@ public class FileSystemWorker {
         }
 
         if (Files.exists(folders.realVcsFolder)) {
-            throw new MyExceptions.AlreadyExistsException();
+            if (Files.walk(folders.realVcsFolder).toArray().length != 3) {
+                throw new MyExceptions.AlreadyExistsException();
+            }
+        } else {
+            Files.createDirectory(folders.realVcsFolder);
         }
-
-        Files.createDirectory(folders.realVcsFolder);
         Files.createFile(folders.realHEADFile);
         Files.createFile(folders.realIndexFile);
         Files.createDirectory(folders.realObjectsFolder);
