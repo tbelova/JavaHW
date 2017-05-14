@@ -1,5 +1,8 @@
 package ru.spbau;
 
+import org.junit.*;
+import org.junit.Test;
+
 import java.lang.reflect.*;
 import java.util.List;
 
