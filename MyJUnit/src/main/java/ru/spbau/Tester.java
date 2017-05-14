@@ -38,7 +38,7 @@ public class Tester {
 
             if (method.getAnnotation(BeforeClass.class) != null) {
                 if (!invoke(method, null)) {
-                    resultList = failAll(shouldBeTested);
+                    resultList = failAll(shouldBeTested, "because of BeforeClass method");
                     resultList.add(new MethodWithResult(method, Result.getFail()));
                 }
             }
@@ -54,19 +54,38 @@ public class Tester {
                 throw new RuntimeException(e);
             }
 
+            Result result = null;
             for (Method before: beforeTests) {
                 if (!invoke(before, object)) {
-                    return failAll(shouldBeTested);
+                    result = Result.getFail();
                 }
             }
 
-            resultList.add(new MethodWithResult(method, test(method, object)));
+            if (result == null) {
+                result = test(method, object);
+            }
 
-            for (Method after: afterTests) {
-                if (!invoke(after, object)) {
-                    return failAll(shouldBeTested);
+            if (result.getType().equals(Type.CORRECT)) {
+                for (Method after: afterTests) {
+                    if (!invoke(after, object)) {
+                        result = Result.getFail();
+                    }
                 }
             }
+
+            resultList.add(new MethodWithResult(method, result));
+
+        }
+
+        for (Method method: forTest.getMethods()) {
+
+            if (method.getAnnotation(AfterClass.class) != null) {
+                if (!invoke(method, null)) {
+                    resultList = failAll(shouldBeTested, "because of AfterClass method");
+                    resultList.add(new MethodWithResult(method, Result.getFail()));
+                }
+            }
+
         }
 
         return resultList;
@@ -85,11 +104,11 @@ public class Tester {
 
     }
 
-    private static @NotNull List<MethodWithResult> failAll(List<Method> tests) {
+    private static @NotNull List<MethodWithResult> failAll(@NotNull List<Method> tests, @NotNull String cause) {
 
         List<MethodWithResult> resultList = new ArrayList<>();
         for (Method test: tests) {
-            resultList.add(new MethodWithResult(test, Result.getIgnored(".")));
+            resultList.add(new MethodWithResult(test, Result.getIgnored(cause)));
         }
 
         return resultList;

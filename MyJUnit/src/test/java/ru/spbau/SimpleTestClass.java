@@ -4,18 +4,18 @@ import java.io.IOException;
 
 public class SimpleTestClass {
 
-    public static void shouldNotBeTested() throws Exception {}
+    public void shouldNotBeTested() throws Exception {}
 
     @Test
-    public static void empty() throws Exception {}
+    public void empty() throws Exception {}
 
     @Test(expected = NullPointerException.class)
-    public static void throwsNullPointerException() throws Exception {
+    public void throwsNullPointerException() throws Exception {
         throw new NullPointerException();
     }
 
     @Test(expected = IOException.class)
-    public static void throwsNullPointerExceptionAndExpectedToThrowIOException() throws Exception {
+    public void throwsNullPointerExceptionAndExpectedToThrowIOException() throws Exception {
         throw new NullPointerException();
     }
 
