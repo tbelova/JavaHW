@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/MyJUnit.iml" filepath="$PROJECT_DIR$/.idea/modules/MyJUnit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/MyJUnit_main.iml" filepath="$PROJECT_DIR$/.idea/modules/MyJUnit_main.iml" group="MyJUnit" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/MyJUnit_test.iml" filepath="$PROJECT_DIR$/.idea/modules/MyJUnit_test.iml" group="MyJUnit" />
+    </modules>
+  </component>
+</project>
