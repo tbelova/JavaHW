@@ -11,7 +11,9 @@ public class TesterTest {
     @org.junit.Test
     public void testSimpleTestClass() throws Exception {
 
-        List<MethodWithResult> results = Tester.test(SimpleTestClass.class);
+        Tester tester = new Tester(SimpleTestClass.class);
+
+        List<MethodWithResult> results = tester.test();
 
         for (MethodWithResult methodWithResult: results) {
 
@@ -35,7 +37,9 @@ public class TesterTest {
     @org.junit.Test
     public void testSimpleTestClassWithBeforeAndAfter() throws Exception {
 
-        List<MethodWithResult> results = Tester.test(SimpleTestClassWithBeforeAndAfter.class);
+        Tester tester = new Tester(SimpleTestClassWithBeforeAndAfter.class);
+
+        List<MethodWithResult> results = tester.test();
 
         for (MethodWithResult methodWithResult: results) {
 

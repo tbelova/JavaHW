@@ -29,7 +29,10 @@ public class Main {
         for (Path file: files) {
 
             Class classToTest = Class.forName(file.toString());
-            List<MethodWithResult> results = Tester.test(classToTest);
+
+            Tester tester = new Tester(classToTest);
+
+            List<MethodWithResult> results = tester.test();
 
             for (MethodWithResult methodWithResult: results) {
                 if (methodWithResult.getResult().getType() != Type.NO_ANNOTATION) {

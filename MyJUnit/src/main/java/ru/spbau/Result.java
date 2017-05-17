@@ -10,19 +10,20 @@ public class Result {
 
     private Type type;
     private String cause;
+    private long time;
 
     /**
      * Возвращает объект, соответствующий корректному завершению теста.
      */
-    public static @NotNull Result getCorrect() {
-        return new Result(Type.CORRECT, null);
+    public static @NotNull Result getCorrect(long time) {
+        return new Result(Type.CORRECT, null, time);
     }
 
     /**
      * Возвращает объект, соответствующий некорректному завершению теста.
      */
-    public static @NotNull Result getFail() {
-        return new Result(Type.FAIL, null);
+    public static @NotNull Result getFail(long time) {
+        return new Result(Type.FAIL, null, time);
     }
 
     /**
@@ -30,7 +31,7 @@ public class Result {
      * Возвращает объект, соответствующий тому, что тест был проигнорирован с указанной причиной.
      */
     public static @NotNull Result getIgnored(@NotNull String s) {
-        return new Result(Type.IGNORED, s);
+        return new Result(Type.IGNORED, s, 0);
     }
 
     /**
@@ -47,11 +48,11 @@ public class Result {
     public @NotNull String toString() {
 
         if (type == Type.CORRECT) {
-            return "OK";
+            return "OK(" + time + "ms)";
         }
 
         if (type == Type.FAIL) {
-            return "FAIL";
+            return "FAIL(" + time + "ms)";
         }
 
         if (type == Type.IGNORED) {
@@ -62,9 +63,10 @@ public class Result {
 
     }
 
-    private Result(@NotNull Type type, @Nullable String cause) {
+    private Result(@NotNull Type type, @Nullable String cause, long time) {
         this.type = type;
         this.cause = cause;
+        this.time = time;
     }
 
 }
