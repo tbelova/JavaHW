@@ -1,0 +1,8 @@
+language: java
+
+jdk: oraclejdk8
+
+env:
+  - PROJECT_DIR=JavaHW15-MyJUnit
+
+before_install: cd $PROJECT_DIR
