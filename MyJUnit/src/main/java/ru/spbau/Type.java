@@ -1,5 +1,8 @@
 package ru.spbau;
 
+/**
+ * Класс со статическими константами, обозначающими тип результата выполнения теста.
+ */
 public class Type {
 
     public static Type CORRECT = new Type();

@@ -7,8 +7,14 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Класс, отвечающий за тестирование классов.
+ */
 public class Main {
 
+    /**
+     * Принимает путь и выполняет запуск тестов, расположенных по этому пути.
+     */
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
         if (args.length != 1) {

@@ -8,8 +8,16 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Класс, позволяющий тестировать классы.
+ */
 public class Tester {
 
+    /**
+     * Принимает класс. Запускает в нем все методы, помеченные аннотацией @Test.
+     * Перед и после каждого метода запускаются все методы, помеченные аннотацией @Before и @After.
+     * Перед и после запуска тестов в классе запускаются все методы, помеченные аннотациями BeforeClass и AfterClass.
+     */
     public static @NotNull List<MethodWithResult> test(@NotNull Class forTest) throws ClassNotFoundException {
 
         List<MethodWithResult> resultList = new ArrayList<>();
@@ -120,7 +128,7 @@ public class Tester {
         Test test = method.getAnnotation(Test.class);
 
         if (test == null) {
-            return Result.getNoAnnotation();
+            throw new RuntimeException();
         }
 
         if (!test.ignore().equals(Test.shouldNotIgnore)) {

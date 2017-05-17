@@ -1,13 +1,9 @@
 package ru.spbau;
 
-import org.junit.*;
-import org.junit.Test;
-
-import java.lang.reflect.*;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class TesterTest {
@@ -59,6 +55,5 @@ public class TesterTest {
         }
 
     }
-
 
 }
